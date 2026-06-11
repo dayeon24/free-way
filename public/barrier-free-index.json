@@ -1,0 +1,385 @@
+{
+  "_meta": {
+    "builtAt": "2026-06-10T12:54:38.155Z",
+    "totalPlaces": 2051,
+    "withBarrierInfo": 86,
+    "fields": [
+      "wheelchair",
+      "restroom",
+      "parking",
+      "elevator",
+      "stroller",
+      "lactationroom"
+    ]
+  },
+  "data": {
+    "126273": [
+      "restroom",
+      "parking"
+    ],
+    "126289": [
+      "restroom",
+      "parking"
+    ],
+    "126329": [
+      "wheelchair",
+      "restroom",
+      "parking",
+      "stroller"
+    ],
+    "126350": [
+      "restroom"
+    ],
+    "126385": [
+      "restroom"
+    ],
+    "126412": [
+      "restroom",
+      "parking"
+    ],
+    "126425": [
+      "wheelchair",
+      "restroom",
+      "parking",
+      "stroller"
+    ],
+    "127064": [
+      "restroom"
+    ],
+    "127075": [
+      "restroom",
+      "parking"
+    ],
+    "127168": [
+      "restroom",
+      "parking"
+    ],
+    "127325": [
+      "restroom",
+      "parking"
+    ],
+    "127539": [
+      "wheelchair",
+      "restroom",
+      "parking",
+      "stroller"
+    ],
+    "128158": [
+      "restroom"
+    ],
+    "128981": [
+      "restroom",
+      "parking"
+    ],
+    "129185": [
+      "wheelchair",
+      "parking",
+      "elevator",
+      "lactationroom"
+    ],
+    "129761": [
+      "wheelchair",
+      "restroom",
+      "parking",
+      "elevator",
+      "stroller",
+      "lactationroom"
+    ],
+    "130032": [
+      "restroom",
+      "parking"
+    ],
+    "130033": [
+      "parking"
+    ],
+    "130117": [
+      "restroom"
+    ],
+    "130208": [
+      "restroom"
+    ],
+    "130392": [
+      "restroom",
+      "parking",
+      "elevator"
+    ],
+    "130807": [
+      "restroom",
+      "parking",
+      "elevator"
+    ],
+    "130808": [
+      "parking",
+      "elevator"
+    ],
+    "130810": [
+      "wheelchair",
+      "restroom",
+      "parking",
+      "elevator"
+    ],
+    "130835": [
+      "restroom",
+      "parking",
+      "elevator"
+    ],
+    "131721": [
+      "restroom",
+      "parking",
+      "elevator"
+    ],
+    "133461": [
+      "parking"
+    ],
+    "250345": [
+      "restroom",
+      "elevator"
+    ],
+    "250453": [
+      "restroom",
+      "parking"
+    ],
+    "346906": [
+      "restroom",
+      "parking"
+    ],
+    "553319": [
+      "wheelchair",
+      "restroom",
+      "parking",
+      "elevator",
+      "stroller"
+    ],
+    "969963": [
+      "restroom",
+      "parking"
+    ],
+    "1330521": [
+      "wheelchair",
+      "restroom"
+    ],
+    "1349796": [
+      "restroom",
+      "parking"
+    ],
+    "1621168": [
+      "restroom",
+      "parking"
+    ],
+    "1621573": [
+      "restroom"
+    ],
+    "1621652": [
+      "restroom"
+    ],
+    "1622203": [
+      "restroom",
+      "parking"
+    ],
+    "1622215": [
+      "restroom",
+      "parking"
+    ],
+    "1622322": [
+      "parking"
+    ],
+    "1745001": [
+      "restroom",
+      "parking",
+      "elevator"
+    ],
+    "1874417": [
+      "parking",
+      "elevator"
+    ],
+    "2009775": [
+      "wheelchair",
+      "restroom",
+      "parking",
+      "elevator",
+      "stroller",
+      "lactationroom"
+    ],
+    "2033064": [
+      "restroom",
+      "parking",
+      "elevator",
+      "lactationroom"
+    ],
+    "2379568": [
+      "restroom",
+      "parking",
+      "elevator"
+    ],
+    "2380837": [
+      "restroom"
+    ],
+    "2470068": [
+      "restroom",
+      "parking",
+      "elevator"
+    ],
+    "2488192": [
+      "parking",
+      "elevator"
+    ],
+    "2514003": [
+      "restroom",
+      "parking"
+    ],
+    "2515789": [
+      "restroom",
+      "parking",
+      "elevator"
+    ],
+    "2542013": [
+      "elevator"
+    ],
+    "2554189": [
+      "wheelchair",
+      "restroom",
+      "parking",
+      "elevator",
+      "stroller"
+    ],
+    "2554479": [
+      "restroom",
+      "elevator"
+    ],
+    "2603494": [
+      "restroom",
+      "parking"
+    ],
+    "2638437": [
+      "wheelchair",
+      "restroom",
+      "parking"
+    ],
+    "2656482": [
+      "restroom",
+      "parking"
+    ],
+    "2663268": [
+      "wheelchair",
+      "restroom",
+      "parking"
+    ],
+    "2664514": [
+      "elevator"
+    ],
+    "2664564": [
+      "parking"
+    ],
+    "2665091": [
+      "parking",
+      "elevator"
+    ],
+    "2668023": [
+      "parking"
+    ],
+    "2673827": [
+      "wheelchair",
+      "restroom",
+      "parking",
+      "elevator",
+      "lactationroom"
+    ],
+    "2700992": [
+      "restroom",
+      "parking",
+      "elevator"
+    ],
+    "2701017": [
+      "restroom",
+      "parking",
+      "elevator"
+    ],
+    "2701043": [
+      "restroom",
+      "parking",
+      "elevator"
+    ],
+    "2701047": [
+      "restroom",
+      "elevator"
+    ],
+    "2706019": [
+      "parking"
+    ],
+    "2732489": [
+      "restroom"
+    ],
+    "2733545": [
+      "restroom",
+      "parking"
+    ],
+    "2752366": [
+      "restroom"
+    ],
+    "2755010": [
+      "restroom",
+      "parking",
+      "elevator",
+      "lactationroom"
+    ],
+    "2755146": [
+      "parking"
+    ],
+    "2758547": [
+      "restroom",
+      "elevator"
+    ],
+    "2783012": [
+      "restroom",
+      "parking",
+      "lactationroom"
+    ],
+    "2783851": [
+      "restroom",
+      "parking"
+    ],
+    "2837706": [
+      "parking"
+    ],
+    "2873016": [
+      "parking"
+    ],
+    "3044523": [
+      "restroom",
+      "parking",
+      "elevator"
+    ],
+    "3044676": [
+      "parking"
+    ],
+    "3106682": [
+      "wheelchair",
+      "restroom",
+      "parking",
+      "elevator"
+    ],
+    "3353909": [
+      "restroom"
+    ],
+    "3448401": [
+      "elevator"
+    ],
+    "3449028": [
+      "restroom"
+    ],
+    "3450458": [
+      "restroom",
+      "parking"
+    ],
+    "3456289": [
+      "restroom",
+      "parking",
+      "elevator"
+    ],
+    "3459087": [
+      "restroom",
+      "parking",
+      "elevator"
+    ]
+  }
+}
