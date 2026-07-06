@@ -2,7 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 
 const TABS = [
   {
-    to: '/',
+    to: '/map',
     label: '지도',
     icon: (active) => (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} className="tab-icon">
@@ -54,9 +54,9 @@ export default function TabBar() {
   return (
     <nav className="tab-bar">
       {TABS.map((tab) => {
-        const active = tab.to === '/' ? location.pathname === '/' : location.pathname.startsWith(tab.to)
+        const active = location.pathname.startsWith(tab.to)
         return (
-          <NavLink key={tab.to} to={tab.to} className={`tab-item ${active ? 'active' : ''}`} end={tab.to === '/'}>
+          <NavLink key={tab.to} to={tab.to} className={`tab-item ${active ? 'active' : ''}`}>
             {tab.icon(active)}
             <span className="tab-label">{tab.label}</span>
           </NavLink>

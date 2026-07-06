@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import Header from './components/Header'
 import TabBar from './components/TabBar'
+import HomePage from './pages/HomePage'
 import MapPage from './pages/MapPage'
 import CoursePage from './pages/CoursePage'
 import StampPage from './pages/StampPage'
@@ -9,14 +10,15 @@ import MyPage from './pages/MyPage'
 
 function AppLayout() {
   const { pathname } = useLocation()
-  const isMapPage = pathname === '/'
+  const isMapPage = pathname === '/map'
 
   return (
     <div className="app-layout">
       <Header />
       <main className={`app-content ${isMapPage ? 'no-scroll' : ''}`}>
         <Routes>
-          <Route path="/" element={<MapPage />} />
+          <Route path="/" element={<HomePage />} />
+          <Route path="/map" element={<MapPage />} />
           <Route path="/course" element={<CoursePage />} />
           <Route path="/stamp" element={<StampPage />} />
           <Route path="/community" element={<CommunityPage />} />

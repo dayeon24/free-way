@@ -7,7 +7,7 @@ import StampPageFront from '../components/StampPage_front'
  * front에 넘기는 데이터: stamps, earned
  */
 
-const STAMPS = [
+export const STAMPS = [
   { id: 1, name: '국립아시아문화전당', earned: true, date: '2026.01.15', icon: '🏛️' },
   { id: 2, name: '광주 중앙공원', earned: true, date: '2026.01.15', icon: '🌳' },
   { id: 3, name: '펭귄마을', earned: false, icon: '🐧' },
