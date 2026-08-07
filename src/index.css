@@ -266,6 +266,23 @@ body {
   to { transform: rotate(360deg); }
 }
 
+/* FAB 버튼 탭 피드백 (기획서 MAP-06) */
+.fab-btn {
+  transition: transform 0.1s;
+}
+.fab-btn:active {
+  transform: scale(0.94);
+}
+
+/* FAB 패널 슬라이드업 (기획서 MAP-06) */
+@keyframes fabSlideUp {
+  from { transform: translateY(16px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.fab-panel {
+  animation: fabSlideUp 0.22s ease;
+}
+
 /* 지도 컨테이너 */
 .map-container {
   width: 100%;

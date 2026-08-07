@@ -14,6 +14,15 @@ export const CATEGORIES = [
   { id: CONTENT_TYPES.RESTAURANT,        label: '음식점',   icon: '🍽️' },
 ]
 
+// 지도탭 필터 칩 전용 (기획서 MAP-04 "칩 구성 5종") — 위 CATEGORIES의 부분집합 + 표기만 다름
+export const MAP_FILTER_CATEGORIES = [
+  { id: CONTENT_TYPES.TOURIST_SPOT,      label: '관광지',   icon: '🏞️' },
+  { id: CONTENT_TYPES.CULTURAL_FACILITY, label: '문화시설', icon: '🏛️' },
+  { id: CONTENT_TYPES.FESTIVAL,          label: '행사·축제', icon: '🎪' },
+  { id: CONTENT_TYPES.RESTAURANT,        label: '음식점',   icon: '🍽️' },
+  { id: CONTENT_TYPES.ACCOMMODATION,     label: '숙박',     icon: '🏨' },
+]
+
 export const TYPE_COLOR = {
   12: '#2e7d32', 14: '#1565c0', 15: '#6a1b9a',
   25: '#e65100', 28: '#00695c', 32: '#ad1457',
@@ -28,3 +37,141 @@ export const BARRIER_ICONS = [
   { key: 'stroller',      icon: '👶', label: '유모차' },
   { key: 'lactationroom', icon: '🍼', label: '수유실' },
 ]
+
+// 무장애 등급 3종 (지도탭 기획서 MAP-03 색상 토큰 그대로)
+// 색상 외 기호(○ 완전가능 / △ 부분가능 / ━ 이용불가) 병기로 WCAG 1.4.1(색에만 의존 금지) 대응
+export const ACCESSIBILITY_GRADES = {
+  available: { label: '완전가능', color: '#2F9E44', bg: '#E5F6E8', textColor: '#1B642B', symbol: '○' },
+  partial:   { label: '부분가능', color: '#DB8B12', bg: '#FBF0DC', textColor: '#8C5300', symbol: '△' },
+  unknown:   { label: '이용불가', color: '#8A9490', bg: '#EEF1EE', textColor: '#8A9490', symbol: '━' },
+}
+
+// 편의시설 배지 색 (기획서 MAP-03)
+export const AMENITY_BADGE = { bg: '#EFF3FA', textColor: '#3A5BB0' }
+
+// 장소의 무장애 등급 계산: barrierIndex(contentId -> 편의시설 키 배열) 기반
+// wheelchair 항목이 있으면 '가능', 다른 편의시설 정보만 있으면 '일부', 인덱스에 없으면 '정보없음'
+export function getAccessibilityGrade(contentId, barrierIndex) {
+  if (!barrierIndex) return 'unknown'
+  const keys = barrierIndex[contentId]
+  if (!keys || keys.length === 0) return 'unknown'
+  return keys.includes('wheelchair') ? 'available' : 'partial'
+}
+
+// 두 좌표 간 거리(km), Haversine 공식 — 거리범위 필터용
+export function getDistanceKm(lat1, lng1, lat2, lng2) {
+  const R = 6371
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLng = (lng2 - lng1) * Math.PI / 180
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+// 지도탭 필터 패널 옵션 (기획서 MAP-02)
+export const AMENITY_FILTERS = [
+  { key: 'wheelchair', label: '휠체어출입',   icon: '♿' },
+  { key: 'restroom',   label: '장애인화장실', icon: '🚻' },
+  { key: 'parking',    label: '전용주차',     icon: '🅿️' },
+  { key: 'elevator',   label: '엘리베이터',   icon: '🛗' },
+]
+
+// 사용자유형: 데이터에 실제 매핑 가능한 유형만 barrierKey 연결, 나머지는 UI만 제공(데이터 미비)
+export const USER_TYPES = [
+  { key: 'all',      label: '전체',          barrierKey: null },
+  { key: 'mobility', label: '지체장애',      barrierKey: 'wheelchair' },
+  { key: 'visual',   label: '시각장애',      barrierKey: null },
+  { key: 'hearing',  label: '청각장애',      barrierKey: null },
+  { key: 'family',   label: '영유아동반가족', barrierKey: 'stroller' },
+  { key: 'elderly',  label: '고령자',        barrierKey: null },
+]
+
+export const DISTANCE_OPTIONS = [1, 3, 5]
+
+// 검색어/등급/편의시설/사용자유형/거리 필터를 spots 배열에 적용하는 순수 함수 (front 전용, back 무변경)
+export function filterSpots(spots, { query, gradeSet, amenitySet, userType, distanceKm, userLocation, barrierIndex }) {
+  return spots.filter(spot => {
+    if (query?.trim()) {
+      const q = query.trim().toLowerCase()
+      const hay = `${spot.title || ''} ${spot.addr1 || ''}`.toLowerCase()
+      if (!hay.includes(q)) return false
+    }
+
+    const grade = getAccessibilityGrade(spot.contentid, barrierIndex)
+    if (gradeSet && !gradeSet.has(grade)) return false
+
+    const keys = barrierIndex?.[spot.contentid] || []
+    if (amenitySet && amenitySet.size > 0) {
+      for (const key of amenitySet) if (!keys.includes(key)) return false
+    }
+
+    const userTypeDef = USER_TYPES.find(u => u.key === userType)
+    if (userTypeDef?.barrierKey && !keys.includes(userTypeDef.barrierKey)) return false
+
+    if (distanceKm && userLocation && spot.mapx && spot.mapy) {
+      const d = getDistanceKm(userLocation.lat, userLocation.lng, parseFloat(spot.mapy), parseFloat(spot.mapx))
+      if (d > distanceKm) return false
+    }
+
+    return true
+  })
+}
+
+// 지도탭 정렬 옵션 (기획서 MAP-05)
+export const SORT_OPTIONS = [
+  { key: 'distance',      label: '거리순' },
+  { key: 'accessibility', label: '무장애 접근순' },
+  { key: 'name',          label: '장소명순' },
+]
+
+const GRADE_RANK = { available: 0, partial: 1, unknown: 2 }
+
+// 거리순/무장애 접근순/장소명순 정렬 (순수 함수)
+export function sortSpots(spots, { sortBy, userLocation, barrierIndex }) {
+  const withDistance = spots.map(spot => ({
+    spot,
+    distance: (userLocation && spot.mapx && spot.mapy)
+      ? getDistanceKm(userLocation.lat, userLocation.lng, parseFloat(spot.mapy), parseFloat(spot.mapx))
+      : Infinity,
+  }))
+
+  if (sortBy === 'accessibility') {
+    withDistance.sort((a, b) => {
+      const rankDiff = GRADE_RANK[getAccessibilityGrade(a.spot.contentid, barrierIndex)] - GRADE_RANK[getAccessibilityGrade(b.spot.contentid, barrierIndex)]
+      return rankDiff !== 0 ? rankDiff : a.distance - b.distance
+    })
+  } else if (sortBy === 'name') {
+    withDistance.sort((a, b) => (a.spot.title || '').localeCompare(b.spot.title || '', 'ko'))
+  } else {
+    withDistance.sort((a, b) => a.distance - b.distance)
+  }
+
+  return withDistance.map(x => x.spot)
+}
+
+// 마커 클러스터링 (기획서 MAP-05 "핀 클러스터링") — CustomOverlay 기반이라 카카오 공식
+// MarkerClusterer(Marker 전용) 대신 격자 기반 자체 클러스터링으로 구현.
+// zoomLevel이 낮을수록(확대) 격자가 작아져 개별 핀으로, 높을수록(축소) 묶여서 카운트 핀으로 표시.
+const CLUSTER_MIN_ZOOM = 6
+
+export function clusterSpots(spots, zoomLevel) {
+  const valid = spots.filter(s => s.mapx && s.mapy)
+  if (zoomLevel < CLUSTER_MIN_ZOOM) {
+    return valid.map(spot => ({ type: 'single', spot }))
+  }
+
+  const cellSize = 0.004 * Math.pow(1.8, zoomLevel - CLUSTER_MIN_ZOOM)
+  const groups = {}
+  valid.forEach(spot => {
+    const lat = parseFloat(spot.mapy), lng = parseFloat(spot.mapx)
+    const key = `${Math.round(lat / cellSize)}_${Math.round(lng / cellSize)}`
+    ;(groups[key] ??= []).push(spot)
+  })
+
+  return Object.values(groups).map(group => {
+    if (group.length === 1) return { type: 'single', spot: group[0] }
+    const lat = group.reduce((sum, s) => sum + parseFloat(s.mapy), 0) / group.length
+    const lng = group.reduce((sum, s) => sum + parseFloat(s.mapx), 0) / group.length
+    return { type: 'cluster', lat, lng, count: group.length, spots: group }
+  })
+}
