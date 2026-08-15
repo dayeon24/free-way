@@ -2,8 +2,6 @@ import { useState } from 'react'
 import { testApiConnection, getAreaBasedList, getTourCourseList, AREA_CODES } from '../utils/tourApi'
 import CoursePageFront from '../components/CoursePage_front'
 
-const API_KEY = import.meta.env.VITE_TOUR_API_KEY
-
 /**
  * CoursePage (BACK) - 기능/로직 담당
  *
@@ -16,7 +14,8 @@ export default function CoursePage() {
   const [loading, setLoading] = useState(false)
   const [activeTest, setActiveTest] = useState(null)
 
-  const hasKey = API_KEY && API_KEY !== 'your_tour_api_key_here'
+  // 서버리스 함수를 통해 키가 관리되므로 항상 true
+  const hasKey = true
 
   async function runTest(label, fn) {
     setLoading(true)
@@ -43,7 +42,7 @@ export default function CoursePage() {
   return (
     <CoursePageFront
       hasKey={hasKey}
-      apiKey={API_KEY}
+      apiKey="(서버 관리)"
       testResult={testResult}
       loading={loading}
       activeTest={activeTest}
