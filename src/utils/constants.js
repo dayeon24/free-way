@@ -154,6 +154,76 @@ export function sortSpots(spots, { sortBy, userLocation, barrierIndex }) {
 // zoomLevel이 낮을수록(확대) 격자가 작아져 개별 핀으로, 높을수록(축소) 묶여서 카운트 핀으로 표시.
 const CLUSTER_MIN_ZOOM = 6
 
+// 커뮤니티 탭 게시글 유형 3종 + 색상 (기획서 커뮤니티탭 "2. 선택시 아이콘 색상 변경")
+export const COMMUNITY_TYPES = [
+  { key: 'review',    label: '후기', icon: '📖', color: '#1976D2', bg: '#E3F0FD', desc: '방문 경험을 공유해요' },
+  { key: 'recommend', label: '추천', icon: '⭐', color: '#7C4DFF', bg: '#EFE8FF', desc: '무장애 장소를 추천해요' },
+  { key: 'report',    label: '제보', icon: '📢', color: '#B23B3B', bg: '#FBE7E7', desc: '접근성 문제를 알려요' },
+]
+
+// 게시글 작성 화면 컬러 토큰 (기획서 "5. 게시글 작성하기 - 8. 컬러 토큰")
+export const WRITE_COLORS = {
+  teal800: '#154A40',
+  teal700: '#1C6354',
+  teal050: '#EFF7F4',
+  ink: '#152521',
+  inkSoft: '#5C6B66',
+  inkFaint: '#94A29D',
+  line: '#E4E9E3',
+}
+
+// 정렬 옵션 (기획서 "정렬 버튼 탭 → 드롭다운")
+export const COMMUNITY_SORT_OPTIONS = [
+  { key: 'latest', label: '최신순' },
+  { key: 'views',  label: '조회수 순' },
+  { key: 'likes',  label: '좋아요 순' },
+]
+
+// 제보 처리 상태 - 무장애 등급과 동일한 색 토큰 재사용(주황=확인중/초록=처리완료)
+export const REPORT_STATUS = {
+  pending:  { label: '확인중',  color: '#DB8B12', bg: '#FBF0DC', textColor: '#8C5300' },
+  resolved: { label: '처리완료', color: '#2F9E44', bg: '#E5F6E8', textColor: '#1B642B' },
+}
+
+// 아바타 색상 팔레트 - 닉네임/uid 해시로 고정 배정 (문자 없이 색상만, 접근성 이슈는 닉네임 텍스트가 대신함)
+const AVATAR_COLORS = ['#F2B94D', '#4CAF7D', '#E28A4B', '#5C9CE0', '#B472D9', '#E0637C']
+export function getAvatarColor(seed) {
+  const str = seed || ''
+  let hash = 0
+  for (let i = 0; i < str.length; i++) hash = (hash * 31 + str.charCodeAt(i)) >>> 0
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length]
+}
+
+// 공지 배너 (기획서 "3. 공지 배너") - 관리자 CMS 연동 전까지 고정값 사용
+export const CURRENT_NOTICE = {
+  text: '전남광주 무장애 관광 추천 코스 업데이트!',
+}
+
+// Firestore Timestamp -> "YYYY-MM-DD" (게시글 상세/카드 하단 절대 날짜 표기용)
+export function formatDate(ts) {
+  if (!ts) return ''
+  const d = ts.toDate ? ts.toDate() : new Date(ts)
+  const pad = n => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+// Firestore Timestamp -> "YYYY-MM-DD HH:mm" (게시글 상세 상단 작성일시)
+export function formatDateTime(ts) {
+  if (!ts) return ''
+  const d = ts.toDate ? ts.toDate() : new Date(ts)
+  const pad = n => String(n).padStart(2, '0')
+  return `${formatDate(ts)} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+// 신고 유형 (기획서 "4. 게시글 옵션 - 신고 유형 선택")
+export const REPORT_REASONS = [
+  { key: 'spam',     icon: '📣', label: '스팸·광고',      desc: '상업적 홍보나 반복 도배 게시글이에요' },
+  { key: 'false',    icon: '✕',  label: '허위·과장 정보', desc: '사실과 다르거나 과장된 접근성 정보에요' },
+  { key: 'abuse',    icon: '⊘',  label: '욕설·혐오 표현', desc: '불쾌하거나 차별적인 언어가 포함돼 있어요' },
+  { key: 'privacy',  icon: '🔒', label: '개인정보 노출',  desc: '타인의 개인정보가 포함된 게시글이에요' },
+  { key: 'etc',      icon: '💬', label: '기타',          desc: '위 항목에 해당하지 않는 다른 이유에요' },
+]
+
 export function clusterSpots(spots, zoomLevel) {
   const valid = spots.filter(s => s.mapx && s.mapy)
   if (zoomLevel < CLUSTER_MIN_ZOOM) {

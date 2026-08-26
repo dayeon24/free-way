@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useKakaoMap } from '../hooks/useKakaoMap'
 import { getLocationBasedList, getBarrierFreeDetail } from '../utils/tourApi'
 import { searchKakaoPlace } from '../utils/kakaoLocal'
@@ -18,6 +19,7 @@ import MapPageFront from '../components/MapPage_front'
  *   handleSpotClick, toggleType, setSelectedSpot
  */
 export default function MapPage() {
+  const location = useLocation()
   const mapRef = useRef(null)
   const mapInstanceRef = useRef(null)
   const markersRef = useRef([])
@@ -53,7 +55,8 @@ export default function MapPage() {
   const fetchCenter = searchCenter || userLocation
 
   // 검색/필터 상태 (기획서 MAP-01/02)
-  const [searchQuery, setSearchQuery] = useState('')
+  // 커뮤니티 탭 "장소 태그" 클릭 시 navigate state로 검색어를 넘겨 지도탭 진입 시 자동 채움
+  const [searchQuery, setSearchQuery] = useState(() => location.state?.searchQuery || '')
   const [filterOpen, setFilterOpen] = useState(false)
   const [gradeFilter, setGradeFilter] = useState(new Set(['available', 'partial', 'unknown']))
   const [amenityFilter, setAmenityFilter] = useState(new Set())
@@ -75,6 +78,16 @@ export default function MapPage() {
     }),
     { sortBy, userLocation: fetchCenter, barrierIndex }
   )
+
+  // 커뮤니티 "장소 태그"로 진입 시, 검색 결과가 정확히 1건이면 자동으로 상세 열고 카메라 이동
+  const navSearchFocusedRef = useRef(false)
+  useEffect(() => {
+    if (!location.state?.searchQuery || navSearchFocusedRef.current) return
+    if (filteredSpots.length === 1) {
+      navSearchFocusedRef.current = true
+      handleSpotClick(filteredSpots[0])
+    }
+  }, [filteredSpots])
 
   function toggleGrade(key) {
     setGradeFilter(prev => {
