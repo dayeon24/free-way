@@ -1,13 +1,5 @@
 {
   "rewrites": [
-    {
-      "source": "/api/tour/:path*",
-      "destination": "https://apis.data.go.kr/B551011/KorService1/:path*"
-    },
-    {
-      "source": "/api/tour-stats/:path*",
-      "destination": "https://apis.data.go.kr/B551011/TourismResourceStatsService/:path*"
-    },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

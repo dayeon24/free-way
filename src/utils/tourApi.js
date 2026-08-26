@@ -1,12 +1,7 @@
-const BASE_URL = 'https://apis.data.go.kr/B551011/KorService2'
-const API_KEY = import.meta.env.VITE_TOUR_API_KEY
-
-async function tourFetch(endpoint, params = {}) {
-  const url = new URL(endpoint)
-  url.searchParams.set('serviceKey', API_KEY)
-  url.searchParams.set('MobileOS', 'ETC')
-  url.searchParams.set('MobileApp', 'Freeway')
-  url.searchParams.set('_type', 'json')
+async function tourFetch(endpoint, params = {}, base = 'default') {
+  const url = new URL('/api/tour', window.location.origin)
+  url.searchParams.set('endpoint', endpoint)
+  if (base !== 'default') url.searchParams.set('base', base)
   Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, String(v)))
 
   const res = await fetch(url.toString())
@@ -23,28 +18,28 @@ async function tourFetch(endpoint, params = {}) {
 
 // 연결 테스트
 export async function testApiConnection() {
-  return tourFetch(`${BASE_URL}/areaBasedList2`, {
+  return tourFetch('areaBasedList2', {
     numOfRows: 1, pageNo: 1, arrange: 'A', areaCode: 5, contentTypeId: 12,
   })
 }
 
 // 1. 지역 기반 관광정보 조회
 export async function getAreaBasedList({ areaCode = 5, contentTypeId = 12, numOfRows = 20, pageNo = 1 } = {}) {
-  return tourFetch(`${BASE_URL}/areaBasedList2`, {
+  return tourFetch('areaBasedList2', {
     numOfRows, pageNo, arrange: 'A', areaCode, contentTypeId,
   })
 }
 
 // 2. 위치 기반 관광정보 조회
 export async function getLocationBasedList({ mapX, mapY, radius = 5000, contentTypeId = 12, numOfRows = 20 } = {}) {
-  return tourFetch(`${BASE_URL}/locationBasedList2`, {
+  return tourFetch('locationBasedList2', {
     numOfRows, pageNo: 1, arrange: 'A', mapX, mapY, radius, contentTypeId,
   })
 }
 
 // 3. 키워드 검색
 export async function searchKeyword({ keyword, areaCode = '', contentTypeId = '', numOfRows = 20 } = {}) {
-  return tourFetch(`${BASE_URL}/searchKeyword2`, {
+  return tourFetch('searchKeyword2', {
     numOfRows, pageNo: 1, arrange: 'A', keyword,
     ...(areaCode && { areaCode }),
     ...(contentTypeId && { contentTypeId }),
@@ -53,7 +48,7 @@ export async function searchKeyword({ keyword, areaCode = '', contentTypeId = ''
 
 // 4. 행사/공연/축제 조회
 export async function searchFestival({ areaCode = 5, eventStartDate, numOfRows = 20 } = {}) {
-  return tourFetch(`${BASE_URL}/searchFestival2`, {
+  return tourFetch('searchFestival2', {
     numOfRows, pageNo: 1, arrange: 'A', areaCode,
     ...(eventStartDate && { eventStartDate }),
   })
@@ -61,14 +56,14 @@ export async function searchFestival({ areaCode = 5, eventStartDate, numOfRows =
 
 // 5. 숙박정보 조회
 export async function searchStay({ areaCode = 5, numOfRows = 20 } = {}) {
-  return tourFetch(`${BASE_URL}/searchStay2`, {
+  return tourFetch('searchStay2', {
     numOfRows, pageNo: 1, arrange: 'A', areaCode,
   })
 }
 
 // 6. 공통정보 조회 (상세정보1) - 제목, 이미지, 주소, 좌표, 개요
 export async function getDetailCommon(contentId, contentTypeId = 12) {
-  return tourFetch(`${BASE_URL}/detailCommon2`, {
+  return tourFetch('detailCommon2', {
     contentId, contentTypeId,
     defaultYN: 'Y', firstImageYN: 'Y', areacodeYN: 'Y',
     addrinfoYN: 'Y', mapinfoYN: 'Y', overviewYN: 'Y',
@@ -77,17 +72,17 @@ export async function getDetailCommon(contentId, contentTypeId = 12) {
 
 // 7. 소개정보 조회 (상세정보2) - 타입별 세부정보 (입장료, 운영시간 등)
 export async function getDetailIntro(contentId, contentTypeId = 12) {
-  return tourFetch(`${BASE_URL}/detailIntro2`, { contentId, contentTypeId })
+  return tourFetch('detailIntro2', { contentId, contentTypeId })
 }
 
 // 8. 반복정보 조회 (상세정보3) - 여행코스 경유지, 숙박 객실 등
 export async function getDetailInfo(contentId, contentTypeId = 25) {
-  return tourFetch(`${BASE_URL}/detailInfo2`, { contentId, contentTypeId })
+  return tourFetch('detailInfo2', { contentId, contentTypeId })
 }
 
 // 9. 이미지정보 조회 (상세정보4)
 export async function getDetailImage(contentId) {
-  return tourFetch(`${BASE_URL}/detailImage2`, { contentId, imageYN: 'Y', subImageYN: 'Y' })
+  return tourFetch('detailImage2', { contentId, imageYN: 'Y', subImageYN: 'Y' })
 }
 
 // 여행코스 목록 (편의 함수)
@@ -119,26 +114,15 @@ export const CONTENT_TYPES = {
 }
 
 // 무장애 여행 정보 조회 (detailWithTour2)
-const BARRIER_FREE_BASE = 'https://apis.data.go.kr/B551011/KorWithService2'
-
 export async function getBarrierFreeDetail(contentId) {
-  const url = new URL(`${BARRIER_FREE_BASE}/detailWithTour2`)
-  url.searchParams.set('serviceKey', API_KEY)
-  url.searchParams.set('MobileOS', 'ETC')
-  url.searchParams.set('MobileApp', 'Freeway')
-  url.searchParams.set('_type', 'json')
-  url.searchParams.set('contentId', String(contentId))
-
-  const res = await fetch(url.toString())
-  if (!res.ok) throw new Error(`무장애API HTTP ${res.status}`)
-  const data = await res.json()
-
-  const header = data?.response?.header
-  if (header?.resultCode !== '0000') return null // 데이터 없으면 null 반환
-
-  const item = data?.response?.body?.items?.item
-  if (!item) return null
-  return [item].flat()[0] // 단건
+  try {
+    const body = await tourFetch('detailWithTour2', { contentId }, 'barrier-free')
+    const item = body?.items?.item
+    if (!item) return null
+    return [item].flat()[0]
+  } catch {
+    return null
+  }
 }
 
 // 여러 contentId 배치 호출 (concurrency 제한)
