@@ -12,6 +12,25 @@ import { COMMUNITY_TYPES, REPORT_STATUS, CURRENT_NOTICE, getAvatarColor, formatD
  *   onFabTap, onConfirmLogin, onCancelLoginPrompt, onPlaceTagClick, onNoticeClick
  */
 
+// 조회수 아이콘 (단색 라인 아이콘 - 이모지 대신)
+function EyeIcon({ size = 14 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  )
+}
+
+// 좋아요 아이콘 - 하트 이모지는 폰트마다 크기/기준선이 달라 옆 아이콘과 줄이 안 맞아서 SVG로 통일
+function HeartIcon({ filled, size = 14 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+    </svg>
+  )
+}
+
 function timeAgo(ts) {
   if (!ts) return ''
   const diff = Date.now() - ts.toMillis()
@@ -155,18 +174,18 @@ function PostCard({ post, currentUser, onLike, onPlaceTagClick }) {
           aria-label={liked ? '좋아요 취소' : '좋아요'}
           aria-pressed={!!liked}
           style={{
-            background: 'none', border: 'none', cursor: 'pointer',
+            background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', lineHeight: 1,
             fontSize: 13, color: liked ? '#e53935' : 'var(--gray-600)',
             display: 'flex', alignItems: 'center', gap: 4, fontWeight: liked ? 600 : 400,
-            minWidth: 44, minHeight: 24, padding: 0,
+            minWidth: 44, padding: 0,
           }}
         >
-          {liked ? '❤️' : '🤍'} {likeCount}
+          <HeartIcon filled={liked} /> {likeCount}
         </button>
-        <span style={{ fontSize: 13, color: 'var(--gray-400)', display: 'flex', alignItems: 'center', gap: 4 }}>
-          👁 {post.viewCount || 0}
+        <span style={{ fontSize: 13, lineHeight: 1, color: 'var(--gray-600)', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <EyeIcon /> {post.viewCount || 0}
         </span>
-        <span style={{ fontSize: 11, color: 'var(--gray-400)', marginLeft: 'auto' }}>{formatDate(post.createdAt)}</span>
+        <span style={{ fontSize: 11, lineHeight: 1, color: 'var(--gray-600)', marginLeft: 'auto' }}>{formatDate(post.createdAt)}</span>
       </div>
     </Link>
   )

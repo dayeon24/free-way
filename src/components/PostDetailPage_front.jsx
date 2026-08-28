@@ -17,6 +17,25 @@ import { COMMUNITY_TYPES, REPORT_STATUS, REPORT_REASONS, getAvatarColor, formatD
  *   onSaveEditComment, onDeleteComment, onLikeComment, onGoCommentReportList, onSelectCommentReportReason, onConfirmCommentReport
  */
 
+// 조회수 아이콘 (단색 라인 아이콘 - 이모지 대신)
+function EyeIcon({ size = 14 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  )
+}
+
+// 좋아요 아이콘 - 하트 이모지는 폰트마다 크기/기준선이 달라 옆 아이콘과 줄이 안 맞아서 SVG로 통일
+function HeartIcon({ filled, size = 14 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+    </svg>
+  )
+}
+
 // 로그인 필요 안내 팝업
 function LoginPromptModal({ onCancel, onConfirm }) {
   return (
@@ -228,7 +247,12 @@ function CommentInput({ onSubmit, onRequireLogin }) {
           display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, fontSize: 14,
         }}
       >
-        {posting ? <span className="spinner" style={{ width: 12, height: 12 }} /> : '✎'}
+        {posting ? <span className="spinner" style={{ width: 12, height: 12 }} /> : (
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13" />
+            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+          </svg>
+        )}
       </button>
     </div>
   )
@@ -317,14 +341,14 @@ function CommentItem({
                 onClick={() => onLikeComment(comment.id, liked)}
                 aria-label={liked ? '좋아요 취소' : '좋아요'}
                 aria-pressed={!!liked}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: liked ? '#e53935' : 'var(--gray-500)', fontWeight: liked ? 600 : 400, padding: 0, display: 'flex', alignItems: 'center', gap: 3 }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', lineHeight: 1, fontSize: 11, color: liked ? '#e53935' : 'var(--gray-600)', fontWeight: liked ? 600 : 400, padding: 0, display: 'flex', alignItems: 'center', gap: 3 }}
               >
-                {liked ? '❤️' : '🤍'} {likeCount > 0 ? likeCount : '좋아요'}
+                <HeartIcon filled={liked} size={12} /> {likeCount > 0 ? likeCount : '좋아요'}
               </button>
               {depth === 0 && (
-                <button onClick={() => onStartReply(comment.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: 'var(--gray-500)', padding: 0 }}>답글달기</button>
+                <button onClick={() => onStartReply(comment.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', lineHeight: 1, fontSize: 11, color: 'var(--gray-600)', padding: 0 }}>답글달기</button>
               )}
-              <span style={{ fontSize: 11, color: 'var(--gray-400)', marginLeft: 'auto' }}>{timeAgo(comment.createdAt)}</span>
+              <span style={{ fontSize: 11, lineHeight: 1, color: 'var(--gray-600)', marginLeft: 'auto' }}>{timeAgo(comment.createdAt)}</span>
             </div>
           )}
 
@@ -422,7 +446,7 @@ export default function PostDetailPageFront({
                 </span>
               </div>
               <span style={{ fontSize: 13, color: 'var(--gray-400)', display: 'flex', alignItems: 'center', gap: 3 }}>
-                👁 {post.viewCount || 0}
+                <EyeIcon /> {post.viewCount || 0}
               </span>
             </div>
 
@@ -459,7 +483,7 @@ export default function PostDetailPageFront({
                 fontSize: 15, fontWeight: 700,
               }}
             >
-              {liked ? '❤️' : '🤍'} {likeCount}
+              <HeartIcon filled={liked} size={17} /> {likeCount}
             </button>
 
             <hr style={{ border: 'none', borderTop: '1px solid var(--gray-100)', marginBottom: 14 }} />

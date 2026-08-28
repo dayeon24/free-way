@@ -107,6 +107,11 @@ export default function CommunityPage() {
     setToast('공지사항 상세 페이지는 준비 중이에요.')
   }
 
+  // 후기/추천/제보 칩은 선택된 걸 다시 누르면 전체로 해제 (전체 칩 자체는 토글 대상 아님)
+  function handleFilterSelect(key) {
+    setFilter(prev => (prev === key ? 'all' : key))
+  }
+
   function handleSortSelect(key) {
     setSortBy(key)
     setSortOpen(false)
@@ -142,7 +147,7 @@ export default function CommunityPage() {
       loginPromptReason={loginPromptReason}
       toast={toast}
       onLike={handleLike}
-      onFilter={setFilter}
+      onFilter={handleFilterSelect}
       onSetSortBy={handleSortSelect}
       onToggleSortOpen={() => setSortOpen(prev => !prev)}
       onSearchChange={setSearchQuery}
