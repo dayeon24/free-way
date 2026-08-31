@@ -55,34 +55,41 @@ export default function HomePageFront({
     setPageIndex(Math.min(Math.max(idx, 1), courses.length || 1))
   }
 
-  const dust = DUST_LABEL[weather.dustLevel] ?? DUST_LABEL.good
-
-  const wheelchairOk = !weather.rain
+  const dust = weather ? (DUST_LABEL[weather.dustLevel] ?? DUST_LABEL.good) : null
+  const wheelchairOk = weather ? !weather.rain : null
 
   return (
     <div className="page">
       {/* 날씨 카드 */}
       <div className="card section" style={{ display: 'flex', gap: 14, alignItems: 'stretch' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', flexShrink: 0 }}>
-          <span style={{ fontSize: 24 }}>{weather.icon}</span>
-          <span style={{ fontSize: 22, fontWeight: 700, marginTop: 2 }}>{weather.temp}°C</span>
-          <span style={{ fontSize: 10, color: 'var(--gray-600)', whiteSpace: 'nowrap' }}>
-            최저 {weather.tempMin}° / 최고 {weather.tempMax}°
-          </span>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <p style={{ fontSize: 13, color: 'var(--gray-700)', lineHeight: 1.5, marginBottom: 8 }}>
-            {weather.message}
-          </p>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <span className="badge" style={{ background: wheelchairOk ? 'var(--green-50)' : '#fff3e0', color: wheelchairOk ? 'var(--green-500)' : '#e65100' }}>
-              ♿ 휠체어 이동 {wheelchairOk ? '양호' : '주의'}
-            </span>
-            <span className="badge" style={{ background: dust.color + '18', color: dust.color }}>
-              😷 미세먼지 {dust.text}
-            </span>
+        {weather ? (
+          <>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', flexShrink: 0 }}>
+              <span style={{ fontSize: 24 }}>{weather.icon}</span>
+              <span style={{ fontSize: 22, fontWeight: 700, marginTop: 2 }}>{weather.temp}°C</span>
+              <span style={{ fontSize: 10, color: 'var(--gray-600)', whiteSpace: 'nowrap' }}>
+                최저 {weather.tempMin != null ? `${weather.tempMin}°` : '-'} / 최고 {weather.tempMax != null ? `${weather.tempMax}°` : '-'}
+              </span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <p style={{ fontSize: 13, color: 'var(--gray-700)', lineHeight: 1.5, marginBottom: 8 }}>
+                {weather.message}
+              </p>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <span className="badge" style={{ background: wheelchairOk ? 'var(--green-50)' : '#fff3e0', color: wheelchairOk ? 'var(--green-500)' : '#e65100' }}>
+                  ♿ 휠체어 이동 {wheelchairOk ? '양호' : '주의'}
+                </span>
+                <span className="badge" style={{ background: dust.color + '18', color: dust.color }}>
+                  😷 미세먼지 {dust.text}
+                </span>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '8px 0' }}>
+            <span style={{ fontSize: 13, color: 'var(--gray-400)' }}>날씨 정보를 불러올 수 없어요 —</span>
           </div>
-        </div>
+        )}
       </div>
 
       {/* 스탬프 투어 */}
