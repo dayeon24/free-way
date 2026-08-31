@@ -294,3 +294,48 @@ body {
 .facility-item.ok { color: var(--green-500); }
 .facility-item.partial { color: #f59e0b; }
 .facility-item.none { color: var(--gray-400); }
+
+/* 글자 크기 */
+:root[data-font-size="small"]  .app-layout { zoom: 0.875; }
+:root[data-font-size="large"]  .app-layout { zoom: 1.2; }
+
+/* 고대비 모드 */
+:root[data-high-contrast="true"] {
+  --green-50:  #b9f6ca;
+  --green-100: #69f0ae;
+  --green-500: #00c853;
+  --green-600: #00b248;
+  --gray-50:   #000000;
+  --gray-100:  #111111;
+  --gray-200:  #333333;
+  --gray-400:  #888888;
+  --gray-600:  #cccccc;
+  --gray-800:  #eeeeee;
+  --gray-900:  #ffffff;
+  --white:     #000000;
+}
+
+:root[data-high-contrast="true"] body {
+  background: #000;
+  color: #fff;
+}
+
+:root[data-high-contrast="true"] .app-layout {
+  background: #000;
+  box-shadow: none;
+}
+
+:root[data-high-contrast="true"] .card {
+  background: #111;
+  border-color: #555;
+}
+
+:root[data-high-contrast="true"] .tab-bar {
+  background: #000;
+  border-top-color: #555;
+}
+
+:root[data-high-contrast="true"] .app-header {
+  background: #000;
+  border-bottom-color: #555;
+}

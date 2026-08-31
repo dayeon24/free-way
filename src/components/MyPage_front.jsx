@@ -1,8 +1,11 @@
+import { useState } from 'react'
+import { useAccessibilityContext } from '../hooks/useAccessibility'
+
 /**
  * MyPage (FRONT) - 외견/UI 담당 (인라인 CSS)
  *
  * back에서 받는 데이터: user, userDoc, isLoading, loading, error
- * back에서 받는 함수: onSignInWithGoogle, onLogout, onUpdateUserDoc
+ * back에서 받는 함수: onSignInWithGoogle, onLogout, onUpdateUserDoc, onUpdateProfile
  */
 
 const TRAVEL_TYPES = [
@@ -11,12 +14,106 @@ const TRAVEL_TYPES = [
   { key: 'elderly',    icon: '🧓', label: '고령자' },
 ]
 
-const SETTINGS = [
-  { key: 'tts',          label: '음성 안내 (TTS)' },
-  { key: 'highContrast', label: '고대비 모드' },
-  { key: 'largeFontSize',label: '글자 크기 조절' },
-  { key: 'stampAlert',   label: '스탬프 알림' },
+const FONT_SIZE_OPTIONS = [
+  { value: 'small',  label: '소' },
+  { value: 'medium', label: '중' },
+  { value: 'large',  label: '대' },
 ]
+
+// 프로필 수정 모달 (닉네임 / 프로필 사진 URL / 소개)
+function EditProfileModal({ initialName, initialPhoto, initialBio, onClose, onSave }) {
+  const [name, setName] = useState(initialName || '')
+  const [photo, setPhoto] = useState(initialPhoto || '')
+  const [bio, setBio] = useState(initialBio || '')
+  const [saving, setSaving] = useState(false)
+
+  async function handleSave() {
+    if (!name.trim() || saving) return
+    setSaving(true)
+    await onSave({ displayName: name.trim(), photoURL: photo.trim(), bio: bio.trim() })
+    setSaving(false)
+    onClose()
+  }
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+      zIndex: 200, display: 'flex', alignItems: 'flex-end',
+    }}>
+      <div style={{
+        background: 'white', borderRadius: '20px 20px 0 0',
+        padding: 20, width: '100%', maxHeight: '85vh', overflowY: 'auto',
+        boxSizing: 'border-box',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <p style={{ fontSize: 16, fontWeight: 700 }}>프로필 수정</p>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: 'var(--gray-400)' }}>✕</button>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+          {photo
+            ? <img src={photo} alt="프로필 미리보기" style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover' }} />
+            : <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'var(--green-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, fontWeight: 700, color: 'var(--green-500)' }}>
+                {name?.[0] || '?'}
+              </div>
+          }
+        </div>
+
+        <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--gray-600)', marginBottom: 6 }}>닉네임</p>
+        <input
+          value={name}
+          onChange={e => setName(e.target.value)}
+          placeholder="닉네임을 입력하세요"
+          maxLength={20}
+          style={{
+            width: '100%', padding: '10px 12px', borderRadius: 8,
+            border: '1px solid var(--gray-200)', fontSize: 14,
+            marginBottom: 14, outline: 'none', boxSizing: 'border-box',
+          }}
+        />
+
+        <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--gray-600)', marginBottom: 6 }}>프로필 사진 URL</p>
+        <input
+          value={photo}
+          onChange={e => setPhoto(e.target.value)}
+          placeholder="https://..."
+          style={{
+            width: '100%', padding: '10px 12px', borderRadius: 8,
+            border: '1px solid var(--gray-200)', fontSize: 14,
+            marginBottom: 14, outline: 'none', boxSizing: 'border-box',
+          }}
+        />
+
+        <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--gray-600)', marginBottom: 6 }}>소개</p>
+        <textarea
+          value={bio}
+          onChange={e => setBio(e.target.value)}
+          placeholder="나를 한 줄로 소개해보세요"
+          maxLength={80}
+          rows={3}
+          style={{
+            width: '100%', padding: '10px 12px', borderRadius: 8,
+            border: '1px solid var(--gray-200)', fontSize: 13,
+            resize: 'none', outline: 'none', lineHeight: 1.6,
+            boxSizing: 'border-box', marginBottom: 6,
+          }}
+        />
+        <p style={{ fontSize: 11, color: 'var(--gray-400)', textAlign: 'right', marginBottom: 16 }}>
+          {bio.length}/80
+        </p>
+
+        <button
+          onClick={handleSave}
+          disabled={!name.trim() || saving}
+          className="btn btn-primary"
+          style={{ width: '100%', opacity: !name.trim() ? 0.5 : 1 }}
+        >
+          {saving ? <span className="spinner" /> : '저장하기'}
+        </button>
+      </div>
+    </div>
+  )
+}
 
 export default function MyPageFront({
   user,
@@ -27,7 +124,11 @@ export default function MyPageFront({
   onSignInWithGoogle,
   onLogout,
   onUpdateUserDoc,
+  onUpdateProfile,
 }) {
+  const [showEditProfile, setShowEditProfile] = useState(false)
+  const { settings: a11y, update: updateA11y } = useAccessibilityContext()
+
   if (isLoading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
@@ -77,20 +178,34 @@ export default function MyPageFront({
     )
   }
 
+  const displayName = userDoc?.displayName || user.displayName
+  const photoURL = userDoc?.photoURL || user.photoURL
+  const bio = userDoc?.bio
+
   return (
     <div className="page">
       <p className="page-title">내 정보</p>
 
-      <div className="card section" style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-        {user.photoURL
-          ? <img src={user.photoURL} alt="프로필" style={{ width: 56, height: 56, borderRadius: '50%', flexShrink: 0 }} />
+      <div className="card section" style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+        {photoURL
+          ? <img src={photoURL} alt="프로필" style={{ width: 56, height: 56, borderRadius: '50%', flexShrink: 0, objectFit: 'cover' }} />
           : <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--green-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 700, color: 'var(--green-500)', flexShrink: 0 }}>
-              {user.displayName?.[0] || '?'}
+              {displayName?.[0] || '?'}
             </div>
         }
-        <div style={{ flex: 1 }}>
-          <p style={{ fontWeight: 700, fontSize: 16, marginBottom: 2 }}>{user.displayName}</p>
-          <p style={{ fontSize: 12, color: 'var(--gray-600)', marginBottom: 10 }}>{user.email}</p>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <p style={{ fontWeight: 700, fontSize: 16 }}>{displayName}</p>
+            <button
+              onClick={() => setShowEditProfile(true)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: 'var(--gray-400)', padding: 2 }}
+              aria-label="프로필 수정"
+            >
+              ✏️
+            </button>
+          </div>
+          <p style={{ fontSize: 12, color: 'var(--gray-600)', marginBottom: bio ? 4 : 10 }}>{user.email}</p>
+          {bio && <p style={{ fontSize: 12, color: 'var(--gray-700)', lineHeight: 1.5, marginBottom: 10 }}>{bio}</p>}
           <div style={{ display: 'flex', gap: 16 }}>
             {[['0', '스탬프'], ['0', '완료 코스'], ['0', '방문지']].map(([n, label]) => (
               <div key={label} style={{ textAlign: 'center' }}>
@@ -126,20 +241,61 @@ export default function MyPageFront({
       <div className="section">
         <p className="section-title">접근성 설정</p>
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {SETTINGS.map(s => {
-            const on = userDoc?.settings?.[s.key] ?? false
-            return (
-              <div key={s.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 13 }}>{s.label}</span>
-                <div
-                  onClick={() => onUpdateUserDoc({ settings: { ...userDoc?.settings, [s.key]: !on } })}
-                  style={{ width: 40, height: 22, borderRadius: 11, background: on ? 'var(--green-500)' : 'var(--gray-200)', position: 'relative', cursor: 'pointer', transition: 'background 0.2s' }}
+
+          {/* TTS */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 13 }}>음성 안내 (TTS)</span>
+            <div
+              onClick={() => updateA11y({ tts: !a11y.tts })}
+              style={{ width: 40, height: 22, borderRadius: 11, background: a11y.tts ? 'var(--green-500)' : 'var(--gray-200)', position: 'relative', cursor: 'pointer', transition: 'background 0.2s' }}
+            >
+              <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'white', position: 'absolute', top: 2, left: a11y.tts ? 20 : 2, transition: 'left 0.2s' }} />
+            </div>
+          </div>
+
+          {/* 글자 크기 */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 13 }}>글자 크기</span>
+            <div style={{ display: 'flex', gap: 6 }}>
+              {FONT_SIZE_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => updateA11y({ fontSize: opt.value })}
+                  style={{
+                    width: 36, height: 28, borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600,
+                    background: a11y.fontSize === opt.value ? 'var(--green-500)' : 'var(--gray-100)',
+                    color: a11y.fontSize === opt.value ? 'white' : 'var(--gray-800)',
+                    transition: 'background 0.15s, color 0.15s',
+                  }}
                 >
-                  <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'white', position: 'absolute', top: 2, left: on ? 20 : 2, transition: 'left 0.2s' }} />
-                </div>
-              </div>
-            )
-          })}
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 고대비 모드 */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 13 }}>고대비 모드</span>
+            <div
+              onClick={() => updateA11y({ highContrast: !a11y.highContrast })}
+              style={{ width: 40, height: 22, borderRadius: 11, background: a11y.highContrast ? 'var(--green-500)' : 'var(--gray-200)', position: 'relative', cursor: 'pointer', transition: 'background 0.2s' }}
+            >
+              <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'white', position: 'absolute', top: 2, left: a11y.highContrast ? 20 : 2, transition: 'left 0.2s' }} />
+            </div>
+          </div>
+
+          {/* 스탬프 알림 (Firestore 연동 유지) */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 13 }}>스탬프 알림</span>
+            <div
+              onClick={() => onUpdateUserDoc({ settings: { ...userDoc?.settings, stampAlert: !(userDoc?.settings?.stampAlert ?? false) } })}
+              style={{ width: 40, height: 22, borderRadius: 11, background: (userDoc?.settings?.stampAlert ?? false) ? 'var(--green-500)' : 'var(--gray-200)', position: 'relative', cursor: 'pointer', transition: 'background 0.2s' }}
+            >
+              <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'white', position: 'absolute', top: 2, left: (userDoc?.settings?.stampAlert ?? false) ? 20 : 2, transition: 'left 0.2s' }} />
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -151,6 +307,16 @@ export default function MyPageFront({
           로그아웃
         </button>
       </div>
+
+      {showEditProfile && (
+        <EditProfileModal
+          initialName={displayName}
+          initialPhoto={photoURL}
+          initialBio={bio}
+          onClose={() => setShowEditProfile(false)}
+          onSave={onUpdateProfile}
+        />
+      )}
     </div>
   )
 }

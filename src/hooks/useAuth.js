@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
 import { onAuthStateChanged, signInWithPopup, signOut, GoogleAuthProvider } from 'firebase/auth'
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore'
+import {
+  doc, setDoc, getDoc, serverTimestamp,
+  collection, query, where, getDocs, writeBatch,
+} from 'firebase/firestore'
 import { auth, db } from '../firebase'
 
 const provider = new GoogleAuthProvider()
@@ -17,6 +20,7 @@ async function ensureUserDoc(user) {
       displayName: user.displayName,
       email: user.email,
       photoURL: user.photoURL,
+      bio: '',
       travelType: 'wheelchair', // 기본값
       settings: {
         tts: true,
@@ -73,12 +77,41 @@ export function useAuth() {
     setUserDoc(null)
   }
 
-  // 유저 설정 업데이트
+  // 유저 설정 업데이트 (여행 유형, 접근성 설정 등)
   async function updateUserDoc(data) {
     if (!user) return
     const ref = doc(db, 'users', user.uid)
     await setDoc(ref, data, { merge: true })
     setUserDoc(prev => ({ ...prev, ...data }))
+  }
+
+  // 닉네임 / 프로필 사진 / 소개 수정
+  // displayName, photoURL이 바뀌면 이전에 작성한 커뮤니티 글의 작성자 정보도 함께 갱신
+  async function updateProfile({ displayName, photoURL, bio } = {}) {
+    if (!user) return
+    const ref = doc(db, 'users', user.uid)
+    const patch = {}
+    if (displayName !== undefined) patch.displayName = displayName
+    if (photoURL !== undefined) patch.photoURL = photoURL
+    if (bio !== undefined) patch.bio = bio
+    if (Object.keys(patch).length === 0) return
+
+    await setDoc(ref, patch, { merge: true })
+    setUserDoc(prev => ({ ...prev, ...patch }))
+
+    // 닉네임/프로필사진이 바뀐 경우 → 기존에 작성한 커뮤니티 글도 일괄 업데이트
+    if (patch.displayName !== undefined || patch.photoURL !== undefined) {
+      const finalName = patch.displayName ?? userDoc?.displayName ?? user.displayName
+      const finalPhoto = patch.photoURL ?? userDoc?.photoURL ?? user.photoURL
+
+      const q = query(collection(db, 'community'), where('uid', '==', user.uid))
+      const snap = await getDocs(q)
+      if (!snap.empty) {
+        const batch = writeBatch(db)
+        snap.docs.forEach(d => batch.update(d.ref, { authorName: finalName, authorPhoto: finalPhoto }))
+        await batch.commit()
+      }
+    }
   }
 
   return {
@@ -90,5 +123,6 @@ export function useAuth() {
     signInWithGoogle,
     logout,
     updateUserDoc,
+    updateProfile,
   }
 }

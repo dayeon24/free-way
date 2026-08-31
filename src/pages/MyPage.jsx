@@ -6,10 +6,13 @@ import MyPageFront from '../components/MyPage_front'
  *
  * 보유: Firebase 로그인, Firestore 설정 저장
  * front에 넘기는 데이터: user, userDoc, isLoading, loading, error
- * front에 넘기는 함수: signInWithGoogle, logout, updateUserDoc
+ * front에 넘기는 함수: signInWithGoogle, logout, updateUserDoc, updateProfile
  */
 export default function MyPage() {
-  const { user, userDoc, isLoading, loading, error, signInWithGoogle, logout, updateUserDoc } = useAuth()
+  const {
+    user, userDoc, isLoading, loading, error,
+    signInWithGoogle, logout, updateUserDoc, updateProfile,
+  } = useAuth()
 
   return (
     <MyPageFront
@@ -21,6 +24,7 @@ export default function MyPage() {
       onSignInWithGoogle={signInWithGoogle}
       onLogout={logout}
       onUpdateUserDoc={updateUserDoc}
+      onUpdateProfile={updateProfile}
     />
   )
 }

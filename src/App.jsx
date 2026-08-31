@@ -6,6 +6,7 @@ import CoursePage from './pages/CoursePage'
 import StampPage from './pages/StampPage'
 import CommunityPage from './pages/CommunityPage'
 import MyPage from './pages/MyPage'
+import { useAccessibility, AccessibilityContext } from './hooks/useAccessibility'
 
 function AppLayout() {
   const { pathname } = useLocation()
@@ -29,9 +30,13 @@ function AppLayout() {
 }
 
 export default function App() {
+  const accessibility = useAccessibility()
+
   return (
-    <BrowserRouter>
-      <AppLayout />
-    </BrowserRouter>
+    <AccessibilityContext.Provider value={accessibility}>
+      <BrowserRouter>
+        <AppLayout />
+      </BrowserRouter>
+    </AccessibilityContext.Provider>
   )
 }
