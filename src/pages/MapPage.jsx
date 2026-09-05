@@ -4,7 +4,7 @@ import { useKakaoMap } from '../hooks/useKakaoMap'
 import { getLocationBasedList, getBarrierFreeDetail } from '../utils/tourApi'
 import { searchKakaoPlace } from '../utils/kakaoLocal'
 import { saveCachedSpots, loadCachedSpots } from '../utils/offlineCache'
-import { CATEGORIES, DEFAULT_CENTER, ACCESSIBILITY_GRADES, getAccessibilityGrade, filterSpots, sortSpots, clusterSpots } from '../utils/constants'
+import { CATEGORIES, DEFAULT_CENTER, ACCESSIBILITY_GRADES, getAccessibilityGrade, filterSpots, sortSpots, clusterSpots, getDistanceKm } from '../utils/constants'
 import MapPageFront from '../components/MapPage_front'
 
 /**
@@ -220,29 +220,125 @@ export default function MapPage() {
   const [showRestrooms, setShowRestrooms] = useState(false)
   const [toast, setToast] = useState(null)
 
+  // 장애인화장실 데이터 (public/accessible-toilets.json)
+  const [restroomData, setRestroomData] = useState([])
+  const restroomMarkersRef = useRef([])
+  const [selectedRestroom, setSelectedRestroom] = useState(null)
+
+  useEffect(() => {
+    fetch('/accessible-toilets.json')
+      .then(r => r.json())
+      .then(data => setRestroomData(data))
+      .catch(() => {})
+  }, [])
+
+  // 전동휠체어 충전소 데이터 (public/accessible-chargers.json)
+  const [chargerData, setChargerData] = useState([])
+  const chargerMarkersRef = useRef([])
+  const [selectedCharger, setSelectedCharger] = useState(null)
+
+  useEffect(() => {
+    fetch('/accessible-chargers.json')
+      .then(r => r.json())
+      .then(data => setChargerData(data))
+      .catch(() => {})
+  }, [])
+
   useEffect(() => {
     if (!toast) return
     const t = setTimeout(() => setToast(null), 2200)
     return () => clearTimeout(t)
   }, [toast])
 
-  // 전동충전소/장애인화장실: 공공데이터포털 API 연동 전까지는 레이어에 표시할 실 데이터가 없어
-  // 토글 시 0건 안내 토스트만 표시 (기획서 "0건 시 토스트 메시지 안내")
   function toggleChargingStations() {
-    setShowChargingStations(prev => {
-      const next = !prev
-      if (next) setToast('현재 지도 범위 내에 등록된 전동충전소가 없습니다.')
-      return next
-    })
+    setShowChargingStations(prev => !prev)
   }
 
   function toggleRestrooms() {
-    setShowRestrooms(prev => {
-      const next = !prev
-      if (next) setToast('현재 지도 범위 내에 등록된 장애인화장실이 없습니다.')
-      return next
-    })
+    setShowRestrooms(prev => !prev)
   }
+
+  // 장애인화장실 마커 그리기 (showRestrooms 토글 또는 위치 변경 시 갱신)
+  useEffect(() => {
+    if (!mapInstanceRef.current || !loaded) return
+    const { kakao } = window
+
+    restroomMarkersRef.current.forEach(m => m.setMap(null))
+    restroomMarkersRef.current = []
+
+    if (!showRestrooms || !fetchCenter || restroomData.length === 0) return
+
+    const radiusKm = Math.max(searchRadius / 1000, 2)
+    const nearby = restroomData.filter(t =>
+      getDistanceKm(fetchCenter.lat, fetchCenter.lng, t.latitude, t.longitude) <= radiusKm
+    )
+
+    nearby.forEach((toilet, i) => {
+      const pinId = `restroom-pin-${i}`
+      const overlay = new kakao.maps.CustomOverlay({
+        map: mapInstanceRef.current,
+        position: new kakao.maps.LatLng(toilet.latitude, toilet.longitude),
+        xAnchor: 0.5,
+        yAnchor: 0.5,
+        content: `<div id="${pinId}" style="
+          width:30px;height:30px;border-radius:50%;
+          background:#1565c0;border:2px solid white;
+          box-shadow:0 1px 4px rgba(0,0,0,0.35);cursor:pointer;
+          display:flex;align-items:center;justify-content:center;font-size:14px;
+        ">🚻</div>`,
+        zIndex: 4,
+      })
+      setTimeout(() => {
+        document.getElementById(pinId)?.addEventListener('click', () => {
+          setSelectedRestroom(toilet)
+          setSelectedSpot(null)
+          setSelectedCharger(null)
+        })
+      }, 0)
+      restroomMarkersRef.current.push(overlay)
+    })
+  }, [showRestrooms, restroomData, fetchCenter, searchRadius, loaded])
+
+  // 전동휠체어 충전소 마커 그리기
+  useEffect(() => {
+    if (!mapInstanceRef.current || !loaded) return
+    const { kakao } = window
+
+    chargerMarkersRef.current.forEach(m => m.setMap(null))
+    chargerMarkersRef.current = []
+
+    if (!showChargingStations || !fetchCenter || chargerData.length === 0) return
+
+    const radiusKm = Math.max(searchRadius / 1000, 2)
+    const nearby = chargerData.filter(c =>
+      getDistanceKm(fetchCenter.lat, fetchCenter.lng, c.latitude, c.longitude) <= radiusKm
+    )
+
+    nearby.forEach((charger, i) => {
+      const pinId = `charger-pin-${i}`
+      const overlay = new kakao.maps.CustomOverlay({
+        map: mapInstanceRef.current,
+        position: new kakao.maps.LatLng(charger.latitude, charger.longitude),
+        xAnchor: 0.5,
+        yAnchor: 0.5,
+        content: `<div id="${pinId}" style="
+          width:30px;height:30px;border-radius:50%;
+          background:#e65100;border:2px solid white;
+          box-shadow:0 1px 4px rgba(0,0,0,0.35);cursor:pointer;
+          display:flex;align-items:center;justify-content:center;font-size:14px;
+        ">⚡</div>`,
+        zIndex: 4,
+      })
+      setTimeout(() => {
+        document.getElementById(pinId)?.addEventListener('click', () => {
+          setSelectedCharger(charger)
+          setSelectedSpot(null)
+          setSelectedRestroom(null)
+        })
+      }, 0)
+      chargerMarkersRef.current.push(overlay)
+    })
+  }, [showChargingStations, chargerData, fetchCenter, searchRadius, loaded])
 
   // 내 위치로 이동 (기획서 MAP-01 FIX 영역)
   function handleMyLocation() {
@@ -333,6 +429,8 @@ export default function MapPage() {
   // 장소 클릭 → 무장애 상세 API + 카카오 장소 정보(전화/링크) 호출 (각각 캐시)
   function handleSpotClick(spot) {
     setSelectedSpot(spot)
+    setSelectedRestroom(null)
+    setSelectedCharger(null)
     if (mapInstanceRef.current && spot.mapx && spot.mapy) {
       mapInstanceRef.current.panTo(new window.kakao.maps.LatLng(parseFloat(spot.mapy), parseFloat(spot.mapx)))
     }
@@ -413,6 +511,10 @@ export default function MapPage() {
       onToggleChargingStations={toggleChargingStations}
       showRestrooms={showRestrooms}
       onToggleRestrooms={toggleRestrooms}
+      selectedRestroom={selectedRestroom}
+      onCloseRestroom={() => setSelectedRestroom(null)}
+      selectedCharger={selectedCharger}
+      onCloseCharger={() => setSelectedCharger(null)}
       onMyLocation={handleMyLocation}
       toast={toast}
     />

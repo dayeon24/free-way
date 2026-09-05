@@ -66,6 +66,10 @@ export default function MapPageFront({
   onToggleChargingStations = () => {},
   showRestrooms = false,
   onToggleRestrooms = () => {},
+  selectedRestroom = null,
+  onCloseRestroom = () => {},
+  selectedCharger = null,
+  onCloseCharger = () => {},
   onMyLocation = () => {},
   toast = null,
 }) {
@@ -583,6 +587,133 @@ export default function MapPageFront({
           </div>
         )
       })()}
+
+      {/* 장애인화장실 바텀시트 */}
+      {selectedRestroom && (
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0,
+          background: 'white', borderRadius: '16px 16px 0 0',
+          padding: 16, boxShadow: '0 -4px 20px rgba(0,0,0,0.12)', zIndex: 100,
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+            <div style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#1565c0', background: '#e3f0fd', padding: '2px 8px', borderRadius: 20 }}>🚻 장애인화장실</span>
+              </div>
+              <p style={{ fontSize: 15, fontWeight: 700, marginBottom: 3 }}>{selectedRestroom.name}</p>
+              <p style={{ fontSize: 12, color: 'var(--gray-600)' }}>{selectedRestroom.address}</p>
+            </div>
+            <button onClick={onCloseRestroom} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--gray-400)' }}>✕</button>
+          </div>
+
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+            {selectedRestroom.maleDisabledToilet > 0 && (
+              <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, background: '#e3f0fd', color: '#1565c0', fontWeight: 600 }}>
+                남성 장애인칸 {selectedRestroom.maleDisabledToilet}개
+              </span>
+            )}
+            {selectedRestroom.maleDisabledUrinal > 0 && (
+              <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, background: '#e3f0fd', color: '#1565c0', fontWeight: 600 }}>
+                남성 소변기 {selectedRestroom.maleDisabledUrinal}개
+              </span>
+            )}
+            {selectedRestroom.femaleDisabledToilet > 0 && (
+              <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, background: '#fce4ec', color: '#c62828', fontWeight: 600 }}>
+                여성 장애인칸 {selectedRestroom.femaleDisabledToilet}개
+              </span>
+            )}
+            {selectedRestroom.emergencyBell && (
+              <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, background: '#fff3e0', color: '#e65100', fontWeight: 600 }}>🔔 비상벨</span>
+            )}
+            {selectedRestroom.diaperTable && (
+              <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, background: '#e8f5e9', color: '#2e7d32', fontWeight: 600 }}>👶 기저귀교환대</span>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', gap: 8 }}>
+            {selectedRestroom.openHours && (
+              <div style={{ flex: 1, padding: '8px 10px', background: 'var(--gray-50)', borderRadius: 8, fontSize: 12, color: 'var(--gray-600)' }}>
+                🕐 {selectedRestroom.openHours}
+              </div>
+            )}
+            {selectedRestroom.phone && (
+              <a href={`tel:${selectedRestroom.phone}`} className="btn btn-outline" style={{ fontSize: 12, textDecoration: 'none', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                📞 전화
+              </a>
+            )}
+            <a
+              href={`https://map.kakao.com/link/to/${encodeURIComponent(selectedRestroom.name)},${selectedRestroom.latitude},${selectedRestroom.longitude}`}
+              target="_blank" rel="noopener noreferrer"
+              className="btn btn-outline" style={{ fontSize: 12, textDecoration: 'none', textAlign: 'center', whiteSpace: 'nowrap' }}
+            >
+              🧭 길찾기
+            </a>
+          </div>
+        </div>
+      )}
+
+      {/* 전동휠체어 충전소 바텀시트 */}
+      {selectedCharger && (
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0,
+          background: 'white', borderRadius: '16px 16px 0 0',
+          padding: 16, boxShadow: '0 -4px 20px rgba(0,0,0,0.12)', zIndex: 100,
+          maxHeight: '55%', overflowY: 'auto',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+            <div style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#e65100', background: '#fff3e0', padding: '2px 8px', borderRadius: 20 }}>⚡ 전동휠체어 충전소</span>
+              </div>
+              <p style={{ fontSize: 15, fontWeight: 700, marginBottom: 3 }}>{selectedCharger.name}</p>
+              <p style={{ fontSize: 12, color: 'var(--gray-600)' }}>{selectedCharger.address}</p>
+            </div>
+            <button onClick={onCloseCharger} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--gray-400)' }}>✕</button>
+          </div>
+
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+            <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, background: '#fff3e0', color: '#e65100', fontWeight: 600 }}>
+              동시 {selectedCharger.simultaneousUse}대 충전
+            </span>
+            {selectedCharger.airInjector && (
+              <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, background: '#e3f0fd', color: '#1565c0', fontWeight: 600 }}>💨 공기주입기</span>
+            )}
+            {selectedCharger.phoneCharging && (
+              <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, background: '#e8f5e9', color: '#2e7d32', fontWeight: 600 }}>📱 핸드폰충전</span>
+            )}
+          </div>
+
+          {selectedCharger.locationDesc && (
+            <div style={{ padding: '8px 12px', background: '#fff8f0', borderRadius: 8, marginBottom: 10, fontSize: 12, color: '#8c4a00', lineHeight: 1.5 }}>
+              📌 {selectedCharger.locationDesc}
+            </div>
+          )}
+
+          <div style={{ padding: '8px 12px', background: 'var(--gray-50)', borderRadius: 8, marginBottom: 12, fontSize: 12, color: 'var(--gray-700)', lineHeight: 1.8 }}>
+            {selectedCharger.weekdayHours && <div>평일 🕐 {selectedCharger.weekdayHours}</div>}
+            {selectedCharger.satHours && <div>토요일 🕐 {selectedCharger.satHours}</div>}
+            {selectedCharger.holidayHours && <div>공휴일 🕐 {selectedCharger.holidayHours}</div>}
+            {!selectedCharger.weekdayHours && !selectedCharger.satHours && !selectedCharger.holidayHours && (
+              <div style={{ color: 'var(--gray-400)' }}>운영시간 정보 없음</div>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', gap: 8 }}>
+            {selectedCharger.phone && (
+              <a href={`tel:${selectedCharger.phone}`} className="btn btn-outline" style={{ fontSize: 12, textDecoration: 'none', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                📞 전화
+              </a>
+            )}
+            <a
+              href={`https://map.kakao.com/link/to/${encodeURIComponent(selectedCharger.name)},${selectedCharger.latitude},${selectedCharger.longitude}`}
+              target="_blank" rel="noopener noreferrer"
+              className="btn btn-outline" style={{ flex: 1, fontSize: 12, textDecoration: 'none', textAlign: 'center', whiteSpace: 'nowrap' }}
+            >
+              🧭 길찾기
+            </a>
+          </div>
+        </div>
+      )}
 
       {/* 필터 옵션 패널 */}
       {filterOpen && (
