@@ -4,6 +4,7 @@ import {
   fetchCandidates, accessInfo, loadBarrierIndex, typeLabel, typeMinutes,
   tourCall, nearestFacility,
 } from './courseApi'
+import { auth } from '../firebase'
 
 /* ───────── 바텀시트 선택지 (기획서 "AI 코스 만들기 — 바텀시트 v2 확정") ───────── */
 
@@ -233,11 +234,19 @@ async function askClaude({ conditions, slotPlan, pool, options }) {
     x: Math.round(c.x * 1e4) / 1e4, y: Math.round(c.y * 1e4) / 1e4, addr: (c.addr || '').replace(/^(전남광주통합특별시|광주광역시|전라남도)\s*/, '').slice(0, 22),
   }))
 
+  // 로그인 안 된 사용자(예: 공유 링크로 들어온 비로그인 방문자)는 토큰이 없어 서버에서 401로 거절됨
+  // → catch에서 규칙 기반으로 자동 대체되므로 여기서 따로 에러 처리 안 해도 됨
+  const idToken = await auth.currentUser?.getIdToken().catch(() => null)
+
   const ctrl = new AbortController()
   const timer = setTimeout(() => ctrl.abort(), 55000)
   try {
     const res = await fetch('/api/course', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
+      },
       body: JSON.stringify({ conditions, slotPlan, candidates: slim, options }), signal: ctrl.signal,
     })
     if (!res.ok) throw new Error(`AI ${res.status}`)

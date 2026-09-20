@@ -1,0 +1,119 @@
+rules_version = '2';
+
+// ⚠️ 이 파일은 검토용 초안입니다. Firebase 콘솔/CLI에 아직 반영되지 않았습니다.
+// 실제 라이브 규칙과 다를 수 있으니, 콘솔의 현재 규칙과 비교해서 검토한 뒤 반영해주세요.
+//
+// 코드(useAuth.js, PostDetailPage.jsx, WritePostPage.jsx)를 기준으로 실제 쓰이는
+// 컬렉션/필드만 반영했습니다. 각 규칙 위에 "왜 이렇게 했는지"를 한글로 적어뒀습니다.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── users/{uid} ──────────────────────────────────────────────
+    // 코드에서 "다른 사람의" users 문서를 읽는 기능이 없음(useAuth.js는 항상 자기 uid만 조회).
+    // → 본인 문서만 읽고 쓸 수 있게 잠가도 기존 기능이 깨지지 않습니다.
+    match /users/{userId} {
+      allow read:   if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      // 수정할 때 uid 필드 자체를 다른 사람 것으로 바꿔치기 못하게 방지
+      allow update: if request.auth != null && request.auth.uid == userId
+                    && request.resource.data.uid == resource.data.uid;
+      allow delete: if false; // 계정 삭제 기능 자체가 코드에 없음
+    }
+
+    // ── community/{postId} ───────────────────────────────────────
+    // 로그인 안 해도 게시글 목록/상세를 볼 수 있는 구조이므로 read는 전체 공개.
+    match /community/{postId} {
+      allow read: if true;
+
+      // 작성 시 uid를 자기 자신으로만 넣을 수 있음 (다른 사람 이름으로 글 쓰기 방지)
+      allow create: if request.auth != null
+                    && request.resource.data.uid == request.auth.uid;
+
+      // 수정은 아래 세 가지 경우만 허용 (모두 로그인 필수):
+      //  (a) 글쓴이 본인이 내용을 고칠 때 (uid 필드는 그대로 유지)
+      //  (b) 로그인한 사람이 '좋아요'만 토글할 때 → 자기 uid만 넣고 뺄 수 있음
+      //  (c) 로그인한 사람이 글을 볼 때 조회수(viewCount)만 1 증가할 때
+      //      → 페이지 자체는 비로그인도 볼 수 있지만(read:true), 조회수 카운트는 로그인한 사람만 반영됨.
+      //      비로그인 방문 시 프론트에서 이 update를 시도해도 auth가 없어 항상 거부되어 카운트되지 않음.
+      allow update: if
+        (request.auth != null
+          && request.auth.uid == resource.data.uid
+          && request.resource.data.uid == resource.data.uid)
+        || (request.auth != null
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])
+          && request.resource.data.likes.removeAll(resource.data.likes).hasOnly([request.auth.uid])
+          && resource.data.likes.removeAll(request.resource.data.likes).hasOnly([request.auth.uid]))
+        || (request.auth != null
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount'])
+          && request.resource.data.viewCount == resource.data.viewCount + 1);
+
+      allow delete: if request.auth != null && request.auth.uid == resource.data.uid;
+
+      // ── community/{postId}/comments/{commentId} ─────────────────
+      match /comments/{commentId} {
+        allow read: if true;
+
+        allow create: if request.auth != null
+                      && request.resource.data.uid == request.auth.uid;
+
+        // 댓글도 게시글과 같은 논리: 본인은 text 수정, 로그인한 사람은 좋아요만 토글
+        allow update: if
+          (request.auth != null && request.auth.uid == resource.data.uid)
+          || (request.auth != null
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])
+            && request.resource.data.likes.removeAll(resource.data.likes).hasOnly([request.auth.uid])
+            && resource.data.likes.removeAll(request.resource.data.likes).hasOnly([request.auth.uid]));
+
+        allow delete: if request.auth != null && request.auth.uid == resource.data.uid;
+      }
+    }
+
+    // ── reports/{reportId} ───────────────────────────────────────
+    // 신고 접수만 클라이언트에서 하고, 신고 목록은 운영자가 콘솔에서 직접 확인하는 구조.
+    // → 생성만 허용, 읽기/수정/삭제는 클라이언트에서 전면 차단.
+    match /reports/{reportId} {
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow read, update, delete: if false;
+    }
+
+    // ── savedCourses/{id} ─────────────────────────────────────────
+    // "내 코스 저장" (utils/courseStore.js saveCourse). 지금은 create만 쓰이지만
+    // 마이페이지에 목록/삭제가 생길 걸 대비해 본인 문서 read/update/delete도 미리 열어둠.
+    match /savedCourses/{id} {
+      allow read:   if request.auth != null && request.auth.uid == resource.data.uid;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.uid;
+    }
+
+    // ── sharedCourses/{shortId} ──────────────────────────────────
+    // URL 공유용 스냅샷 (shareCourse). 누가 공유했는지 uid를 저장하지 않는 익명 구조라
+    // 소유자 검증이 불가능함 → 링크만 있으면 누구나 볼 수 있는 게 원래 의도(read: true).
+    // 한 번 만들면 다시 바꾸지 않는 불변 데이터라 update/delete는 막음.
+    match /sharedCourses/{shortId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if false;
+    }
+
+    // ── courseLikes/{courseId} ───────────────────────────────────
+    // 코스별 좋아요 (setDoc + merge:true라 문서가 없으면 create, 있으면 update로 갈림).
+    // 비로그인도 목록에서 좋아요 숫자를 보므로 read는 공개, 쓰기는 내 uid만 넣고 뺄 수 있게 제한.
+    match /courseLikes/{courseId} {
+      allow read: if true;
+
+      // 이 코스에 처음 좋아요가 눌려 문서가 아직 없을 때: likes 필드 하나만, 값은 내 uid 하나뿐이어야 함
+      allow create: if request.auth != null
+                    && request.resource.data.keys().hasOnly(['likes'])
+                    && request.resource.data.likes == [request.auth.uid];
+
+      // 이미 문서가 있을 때: likes 필드만 바뀌고, 내 uid만 넣거나 뺄 수 있음
+      allow update: if request.auth != null
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])
+                    && request.resource.data.likes.removeAll(resource.data.likes).hasOnly([request.auth.uid])
+                    && resource.data.likes.removeAll(request.resource.data.likes).hasOnly([request.auth.uid]);
+
+      allow delete: if false;
+    }
+  }
+}

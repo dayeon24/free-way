@@ -34,10 +34,40 @@ function extractJson(text) {
   return JSON.parse(trimmed.slice(start, end + 1))
 }
 
+// 화면(RequireAuth)은 로그인 안 된 사람을 /course, /course/ai에서 막아주지만,
+// /course/share/:shareId(공유 링크, 로그인 게이트 예외)에서도 "재생성" 버튼으로 이 엔드포인트를 탈 수 있고,
+// 애초에 이 주소 자체는 로그인 여부와 무관하게 누구나 직접 호출할 수 있는 공개 URL이라
+// 서버에서도 Firebase 로그인 토큰을 직접 검증해야 진짜로 막힘 (비용 남용 방지).
+// firebase-admin 없이, 이미 클라이언트에 공개된 Firebase 웹 API 키로 토큰 유효성만 확인.
+async function verifyIdToken(idToken) {
+  const apiKey = process.env.VITE_FIREBASE_API_KEY
+  if (!apiKey || !idToken) return false
+  try {
+    const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken }),
+    })
+    if (!res.ok) return false
+    const data = await res.json()
+    return Array.isArray(data.users) && data.users.length > 0
+  } catch {
+    return false
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'POST 요청만 지원합니다' })
   }
+
+  const authHeader = req.headers.authorization || ''
+  const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
+  if (!(await verifyIdToken(idToken))) {
+    // 프론트는 이 응답도 규칙 기반 생성기로 조용히 대체 (비로그인 사용자는 애초에 이 요청 자체를 안 보냄)
+    return res.status(401).json({ error: '로그인이 필요합니다' })
+  }
+
   if (!process.env.ANTHROPIC_API_KEY) {
     // 프론트는 이 응답을 받으면 규칙 기반 생성기로 대체
     return res.status(503).json({ error: 'ANTHROPIC_API_KEY not configured' })
