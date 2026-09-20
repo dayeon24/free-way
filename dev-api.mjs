@@ -5,6 +5,9 @@
 import http from 'http'
 import { readFileSync } from 'fs'
 import { URL } from 'url'
+import kakaoHandler from './api/kakao.js'
+import courseHandler from './api/course.js'
+import directionsHandler from './api/directions.js'
 
 // .env 파일에서 환경변수 로드
 try {
@@ -105,26 +108,29 @@ async function handleTour(req, res, searchParams) {
   }
 }
 
-async function handleKakao(req, res, searchParams) {
-  const query = searchParams.get('query')
-  const x = searchParams.get('x')
-  const y = searchParams.get('y')
-  const url = new URL('https://dapi.kakao.com/v2/local/search/keyword.json')
-  url.searchParams.set('query', query)
-  if (x) url.searchParams.set('x', x)
-  if (y) url.searchParams.set('y', y)
-  url.searchParams.set('radius', '500')
-  url.searchParams.set('size', '1')
+// Vercel 서버리스 함수(api/*.js)를 그대로 재사용하는 어댑터 — req.query / req.body / res.status().json() 형태로 맞춰 호출
+// (로컬과 배포 환경의 동작이 항상 같도록 kakao/course/directions는 핸들러를 복제하지 않고 직접 import해서 씀)
+async function runVercelHandler(handler, req, res, searchParams) {
+  let raw = ''
+  for await (const chunk of req) raw += chunk
+  let body
+  try { body = raw ? JSON.parse(raw) : undefined } catch { body = undefined }
+
+  const vreq = { method: req.method, query: Object.fromEntries(searchParams), body, headers: req.headers }
+  const vres = {
+    statusCode: 200,
+    status(code) { this.statusCode = code; return this },
+    setHeader(k, v) { res.setHeader(k, v); return this },
+    json(obj) {
+      res.writeHead(this.statusCode, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify(obj))
+    },
+  }
   try {
-    const apiRes = await fetch(url.toString(), {
-      headers: { Authorization: `KakaoAK ${process.env.KAKAO_REST_KEY}` },
-    })
-    const data = await apiRes.json()
-    res.writeHead(200, { 'Content-Type': 'application/json' })
-    res.end(JSON.stringify(data))
+    await handler(vreq, vres)
   } catch (err) {
     res.writeHead(500, { 'Content-Type': 'application/json' })
-    res.end(JSON.stringify({ error: 'Kakao API 호출 실패', detail: err.message }))
+    res.end(JSON.stringify({ error: '핸들러 실행 오류', detail: err.message }))
   }
 }
 
@@ -136,7 +142,9 @@ const server = http.createServer(async (req, res) => {
 
   if (path === '/api/weather') return handleWeather(req, res, params)
   if (path === '/api/tour') return handleTour(req, res, params)
-  if (path === '/api/kakao') return handleKakao(req, res, params)
+  if (path === '/api/kakao') return runVercelHandler(kakaoHandler, req, res, params)
+  if (path === '/api/course') return runVercelHandler(courseHandler, req, res, params)
+  if (path === '/api/directions') return runVercelHandler(directionsHandler, req, res, params)
 
   res.writeHead(404)
   res.end('Not found')
@@ -146,4 +154,6 @@ server.listen(PORT, () => {
   console.log(`✅ 로컬 API 서버 실행 중: http://localhost:${PORT}`)
   console.log(`   WEATHER_API_KEY: ${process.env.WEATHER_API_KEY ? '✓ 설정됨' : '✗ 없음'}`)
   console.log(`   TOUR_API_KEY:    ${process.env.TOUR_API_KEY ? '✓ 설정됨' : '✗ 없음'}`)
+  console.log(`   KAKAO_REST_KEY:  ${process.env.KAKAO_REST_KEY ? '✓ 설정됨' : '✗ 없음'}`)
+  console.log(`   ANTHROPIC_API_KEY: ${process.env.ANTHROPIC_API_KEY ? '✓ 설정됨' : '✗ 없음 (AI 코스는 규칙 기반으로 대체)'}`)
 })

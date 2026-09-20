@@ -218,7 +218,7 @@ export default function MapPage() {
   const [fabOpen, setFabOpen] = useState(false)
   const [showChargingStations, setShowChargingStations] = useState(false)
   const [showRestrooms, setShowRestrooms] = useState(false)
-  const [toast, setToast] = useState(null)
+  const [toast, setToast] = useState(() => location.state?.toast || null) // 코스 탭 장소 pill → 지도 이동 시 안내 토스트
 
   // 장애인화장실 데이터 (public/accessible-toilets.json)
   const [restroomData, setRestroomData] = useState([])

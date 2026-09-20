@@ -1,6 +1,9 @@
 {
   "buildCommand": "npm run build",
   "installCommand": "npm install",
+  "functions": {
+    "api/course.js": { "maxDuration": 60 }
+  },
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]
