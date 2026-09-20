@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { useNavigate, useParams } from 'react-router-dom'
+import { collection, addDoc, doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { db, storage } from '../firebase'
 import { useAuth } from '../hooks/useAuth'
@@ -35,12 +35,43 @@ function withTimeout(promise, ms, message) {
 export default function WritePostPage() {
   const { user, signInWithGoogle } = useAuth()
   const navigate = useNavigate()
+  const { id: editId } = useParams() // /community/:id/edit로 들어왔으면 수정 모드
 
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [type, setType] = useState(null)
   const [place, setPlace] = useState(null) // { name, mapx, mapy } | null
-  const [images, setImages] = useState([]) // { file, url }
+  const [images, setImages] = useState([]) // { file, url } — 수정 모드에서 기존 이미지는 file: null, url: 기존주소
+
+  // 수정 모드: 기존 글 불러와서 폼에 채워넣기 (본인 글 아니면 접근 불가)
+  const [postLoading, setPostLoading] = useState(!!editId)
+  const [postLoadError, setPostLoadError] = useState(null)
+  useEffect(() => {
+    if (!editId || !user) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const snap = await getDoc(doc(db, 'community', editId))
+        if (cancelled) return
+        if (!snap.exists() || snap.data().uid !== user.uid) {
+          setPostLoadError('수정할 수 없는 게시글이에요.')
+          return
+        }
+        const data = snap.data()
+        setTitle(data.title || '')
+        setBody(data.body || '')
+        setType(data.type || null)
+        if (data.placeName) setPlace({ name: data.placeName, mapx: data.placeMapx, mapy: data.placeMapy })
+        setImages((data.images || []).map(url => ({ file: null, url })))
+      } catch (e) {
+        console.error(e)
+        if (!cancelled) setPostLoadError('게시글을 불러오지 못했어요.')
+      } finally {
+        if (!cancelled) setPostLoading(false)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [editId, user])
 
   const [typeDropdownOpen, setTypeDropdownOpen] = useState(false)
   const [placeSearchOpen, setPlaceSearchOpen] = useState(false)
@@ -123,18 +154,32 @@ export default function WritePostPage() {
     if (!canSubmit || !user) return
     setSubmitting(true)
     try {
-      let imageUrls = []
-      if (images.length) {
-        imageUrls = await withTimeout(
-          Promise.all(images.map(async (img, i) => {
-            const fileRef = ref(storage, `community/${user.uid}/${Date.now()}-${i}`)
-            await uploadBytes(fileRef, img.file)
-            return getDownloadURL(fileRef)
-          })),
-          UPLOAD_TIMEOUT_MS,
-          '사진 업로드 시간이 초과됐어요.'
-        )
+      // 기존 이미지(url만 있고 file 없음)는 그대로 두고, 새로 추가한 것만 업로드
+      const imageUrls = await withTimeout(
+        Promise.all(images.map(async (img, i) => {
+          if (!img.file) return img.url
+          const fileRef = ref(storage, `community/${user.uid}/${Date.now()}-${i}`)
+          await uploadBytes(fileRef, img.file)
+          return getDownloadURL(fileRef)
+        })),
+        UPLOAD_TIMEOUT_MS,
+        '사진 업로드 시간이 초과됐어요.'
+      )
+
+      if (editId) {
+        await updateDoc(doc(db, 'community', editId), {
+          title: title.trim(),
+          body: body.trim(),
+          type,
+          placeName: place?.name || null,
+          placeMapx: place?.mapx || null,
+          placeMapy: place?.mapy || null,
+          images: imageUrls,
+        })
+        navigate(`/community/${editId}`)
+        return
       }
+
       const docRef = await addDoc(collection(db, 'community'), {
         title: title.trim(),
         body: body.trim(),
@@ -154,7 +199,7 @@ export default function WritePostPage() {
       navigate(`/community/${docRef.id}`)
     } catch (e) {
       console.error(e)
-      setToast(e.message === '사진 업로드 시간이 초과됐어요.' ? e.message : '게시글 등록에 실패했어요. 다시 시도해주세요.')
+      setToast(e.message === '사진 업로드 시간이 초과됐어요.' ? e.message : (editId ? '게시글 수정에 실패했어요. 다시 시도해주세요.' : '게시글 등록에 실패했어요. 다시 시도해주세요.'))
       setSubmitting(false)
     }
   }
@@ -163,8 +208,21 @@ export default function WritePostPage() {
     await signInWithGoogle()
   }
 
+  if (editId && postLoading) {
+    return <div className="page" style={{ padding: 24, textAlign: 'center', color: 'var(--gray-500)', fontSize: 13 }}>불러오는 중...</div>
+  }
+  if (editId && postLoadError) {
+    return (
+      <div className="page" style={{ padding: 24, textAlign: 'center' }}>
+        <p style={{ fontSize: 13, color: 'var(--gray-600)', marginBottom: 12 }}>{postLoadError}</p>
+        <button onClick={() => navigate('/community')} className="btn btn-outline">목록으로</button>
+      </div>
+    )
+  }
+
   return (
     <WritePostPageFront
+      isEdit={!!editId}
       user={user}
       title={title}
       body={body}

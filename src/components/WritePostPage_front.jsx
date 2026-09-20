@@ -35,7 +35,7 @@ function LoginGateScreen({ onConfirmLogin, onCancel }) {
 }
 
 export default function WritePostPageFront({
-  user, title, body, type, place, images,
+  isEdit, user, title, body, type, place, images,
   typeDropdownOpen, placeSearchOpen, placeSearchQuery, placeResults, placeSearchLoading,
   cancelConfirmOpen, submitting, processingImages, canSubmit, toast,
   onSetTitle, onSetBody, onToggleTypeDropdown, onSelectType,
@@ -102,7 +102,7 @@ export default function WritePostPageFront({
             color: canSubmit ? C.teal800 : C.inkFaint,
           }}
         >
-          {submitting ? <span className="spinner" style={{ width: 14, height: 14, borderTopColor: C.teal800, borderColor: 'rgba(0,0,0,0.1)' }} /> : '등록'}
+          {submitting ? <span className="spinner" style={{ width: 14, height: 14, borderTopColor: C.teal800, borderColor: 'rgba(0,0,0,0.1)' }} /> : (isEdit ? '수정' : '등록')}
         </button>
       </div>
 

@@ -257,8 +257,26 @@ export default function PostDetailPage() {
   }
   function handleCloseOptions() { setOptionsStep(null); setReportReason(null) }
   function handleOptionsBack() {
-    if (optionsStep === 'share' || optionsStep === 'reportList') setOptionsStep('menu')
+    if (optionsStep === 'share' || optionsStep === 'reportList' || optionsStep === 'deleteConfirm') setOptionsStep('menu')
     else if (optionsStep === 'reportConfirm') setOptionsStep('reportList')
+  }
+
+  function handleEditPost() {
+    setOptionsStep(null)
+    navigate(`/community/${id}/edit`)
+  }
+
+  function handleGoDeletePost() { setOptionsStep('deleteConfirm') }
+
+  async function handleConfirmDeletePost() {
+    try {
+      await deleteDoc(doc(db, 'community', id))
+      navigate('/community')
+    } catch (e) {
+      console.error(e)
+      setToast('게시글 삭제에 실패했어요. 다시 시도해주세요.')
+      handleCloseOptions()
+    }
   }
 
   const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/community/${id}` : ''
@@ -347,6 +365,9 @@ export default function PostDetailPage() {
       onConfirmReport={handleConfirmReport}
       onCopyShareLink={handleCopyShareLink}
       onShare={handleShare}
+      onEditPost={handleEditPost}
+      onGoDeletePost={handleGoDeletePost}
+      onConfirmDeletePost={handleConfirmDeletePost}
       onConfirmLogin={handleConfirmLogin}
       onCancelLoginPrompt={() => setLoginPromptReason(null)}
       onPlaceTagClick={handlePlaceTagClick}

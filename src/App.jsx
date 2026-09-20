@@ -32,9 +32,10 @@ function AppLayout() {
           {/* 공유 링크는 로그인 게이트 예외: URL만 있으면 비로그인도 열람 가능해야 함 */}
           <Route path="/course/share/:shareId" element={<AiCoursePage />} />
           <Route path="/course/:id" element={<RequireAuth><CourseDetailPage /></RequireAuth>} />
-          <Route path="/stamp" element={<StampPage />} />
+          <Route path="/stamp" element={<RequireAuth><StampPage /></RequireAuth>} />
           <Route path="/community" element={<RequireAuth><CommunityPage /></RequireAuth>} />
           <Route path="/community/write" element={<RequireAuth><WritePostPage /></RequireAuth>} />
+          <Route path="/community/:id/edit" element={<RequireAuth><WritePostPage /></RequireAuth>} />
           <Route path="/community/:id" element={<RequireAuth><PostDetailPage /></RequireAuth>} />
           <Route path="/my" element={<MyPage />} />
         </Routes>

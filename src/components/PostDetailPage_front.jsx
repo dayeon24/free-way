@@ -76,7 +76,22 @@ function ImageCarousel({ images }) {
 }
 
 // 게시글 옵션 바텀시트 (기획서 "4. 게시글 옵션")
-function PostOptionsSheet({ step, reportReason, shareUrl, onClose, onBack, onGoShare, onGoReportList, onSelectReportReason, onConfirmReport, onCopyShareLink, onShare }) {
+function PostOptionsSheet({ step, isOwn, reportReason, shareUrl, onClose, onBack, onGoShare, onGoReportList, onSelectReportReason, onConfirmReport, onCopyShareLink, onShare, onEdit, onGoDelete, onConfirmDelete }) {
+  if (step === 'deleteConfirm') {
+    return (
+      <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <div style={{ background: 'white', borderRadius: 16, padding: '26px 20px 20px', width: '100%', maxWidth: 300, textAlign: 'center' }}>
+          <div style={{ width: 44, height: 44, borderRadius: '50%', background: '#FBE7E7', color: '#B23B3B', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, margin: '0 auto 14px' }}>🗑</div>
+          <p style={{ fontSize: 15, fontWeight: 700, marginBottom: 6 }}>게시글을 삭제하시겠어요?</p>
+          <p style={{ fontSize: 11, color: 'var(--gray-400)', marginBottom: 20 }}>삭제 후에는 되돌릴 수 없어요.</p>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={onBack} style={{ flex: 1, padding: '11px 0', borderRadius: 8, border: '1px solid var(--gray-200)', background: 'white', color: 'var(--gray-800)', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>아니오</button>
+            <button onClick={onConfirmDelete} style={{ flex: 1, padding: '11px 0', borderRadius: 8, border: 'none', background: '#B23B3B', color: 'white', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>삭제할게요</button>
+          </div>
+        </div>
+      </div>
+    )
+  }
   if (step === 'reportConfirm') {
     const reasonDef = REPORT_REASONS.find(r => r.key === reportReason)
     return (
@@ -105,10 +120,23 @@ function PostOptionsSheet({ step, reportReason, shareUrl, onClose, onBack, onGoS
               <span style={{ fontSize: 20 }}>🔗</span>
               <span><p style={{ fontSize: 14, fontWeight: 600 }}>공유하기</p><p style={{ fontSize: 11, color: 'var(--gray-500)' }}>링크를 복사하거나 외부 앱으로 공유해요</p></span>
             </button>
-            <button onClick={onGoReportList} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '12px 4px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
-              <span style={{ fontSize: 20 }}>⚠️</span>
-              <span><p style={{ fontSize: 14, fontWeight: 600, color: '#B23B3B' }}>신고하기</p><p style={{ fontSize: 11, color: 'var(--gray-500)' }}>부적절한 게시글을 운영자에게 알려요</p></span>
-            </button>
+            {isOwn ? (
+              <>
+                <button onClick={onEdit} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '12px 4px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+                  <span style={{ fontSize: 20 }}>✏️</span>
+                  <span><p style={{ fontSize: 14, fontWeight: 600 }}>수정하기</p></span>
+                </button>
+                <button onClick={onGoDelete} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '12px 4px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+                  <span style={{ fontSize: 20 }}>🗑</span>
+                  <span><p style={{ fontSize: 14, fontWeight: 600, color: '#B23B3B' }}>삭제하기</p></span>
+                </button>
+              </>
+            ) : (
+              <button onClick={onGoReportList} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '12px 4px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+                <span style={{ fontSize: 20 }}>⚠️</span>
+                <span><p style={{ fontSize: 14, fontWeight: 600, color: '#B23B3B' }}>신고하기</p><p style={{ fontSize: 11, color: 'var(--gray-500)' }}>부적절한 게시글을 운영자에게 알려요</p></span>
+              </button>
+            )}
             <button onClick={onClose} className="btn" style={{ width: '100%', marginTop: 10, background: 'var(--gray-100)', color: 'var(--gray-700)' }}>취소</button>
           </>
         )}
@@ -390,13 +418,15 @@ export default function PostDetailPageFront({
   editingComment, loginPromptReason, toast, shareUrl,
   onBack, onRetryPost, onLike, onSubmitComment, onRetryComments,
   onOpenOptions, onCloseOptions, onOptionsBack, onGoShare, onGoReportList, onSelectReportReason, onConfirmReport,
-  onCopyShareLink, onShare, onConfirmLogin, onCancelLoginPrompt, onPlaceTagClick, onRequireCommentLogin,
+  onCopyShareLink, onShare, onEditPost, onGoDeletePost, onConfirmDeletePost,
+  onConfirmLogin, onCancelLoginPrompt, onPlaceTagClick, onRequireCommentLogin,
   onStartReply, onCancelReply, onSubmitReply,
   onOpenCommentOptions, onCloseCommentOptions, onCommentOptionsBack, onStartEditComment, onCancelEditComment,
   onSaveEditComment, onDeleteComment, onLikeComment, onGoCommentReportList, onSelectCommentReportReason, onConfirmCommentReport,
 }) {
   const liked = user && post?.likes?.includes(user.uid)
   const likeCount = post?.likes?.length || 0
+  const isOwnPost = !!user && post?.uid === user.uid
   const typeDef = post ? (COMMUNITY_TYPES.find(t => t.key === post.type) || COMMUNITY_TYPES[0]) : null
   const statusDef = post?.type === 'report' ? REPORT_STATUS[post.reportStatus || 'pending'] : null
 
@@ -541,10 +571,11 @@ export default function PostDetailPageFront({
 
       {optionsStep && (
         <PostOptionsSheet
-          step={optionsStep} reportReason={reportReason} shareUrl={shareUrl}
+          step={optionsStep} isOwn={isOwnPost} reportReason={reportReason} shareUrl={shareUrl}
           onClose={onCloseOptions} onBack={onOptionsBack} onGoShare={onGoShare} onGoReportList={onGoReportList}
           onSelectReportReason={onSelectReportReason} onConfirmReport={onConfirmReport}
           onCopyShareLink={onCopyShareLink} onShare={onShare}
+          onEdit={onEditPost} onGoDelete={onGoDeletePost} onConfirmDelete={onConfirmDeletePost}
         />
       )}
 
