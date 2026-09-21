@@ -5,6 +5,7 @@ import {
   tourCall, nearestFacility,
 } from './courseApi'
 import { auth } from '../firebase'
+import { classifyAccess } from './accessGrade'
 
 /* ───────── 바텀시트 선택지 (기획서 "AI 코스 만들기 — 바텀시트 v2 확정") ───────── */
 
@@ -139,12 +140,18 @@ export function courseMeta(course) {
 
 let seq = 0
 export function makeItem(c, barrier, sensitive, extra = {}) {
-  const { grade, warning } = accessInfo(c.id, barrier, { sensitive })
+  let { grade, warning } = accessInfo(c.id, barrier, { sensitive })
+  // 정적 코스 데이터에 미리 채워 둔 무장애 등급(scripts/enrich-course-access.mjs) — 인덱스에 없을 때만 사용
+  let accessTags = []
+  if (grade === 'unknown' && c.access) {
+    grade = c.access.grade; accessTags = c.access.tags || []
+    warning = sensitive && grade !== 'available' ? c.access.note : null
+  }
   return {
     key: `${c.id}-${(seq++).toString(36)}`,
     kind: 'place', contentid: String(c.id), name: c.name, type: c.type, typeLabel: typeLabel(c.type),
     x: c.x, y: c.y, addr: c.addr || '', image: c.image || '',
-    durationMin: typeMinutes(c.type), grade, warning,
+    durationMin: typeMinutes(c.type), grade, warning, accessTags,
     openTime: c.openTime || '', restDate: c.restDate || '',
     reason: '', leg: null, time: '09:00', ...extra,
   }
@@ -436,10 +443,6 @@ export async function fetchOpenInfo(contentid, type) {
 export async function fetchAccessGrade(contentid) {
   try {
     const [it] = await tourCall('detailWithTour2', { contentId: contentid }, 'barrier-free')
-    if (!it) return null
-    const has = k => clean(it[k]).length > 0
-    if (has('wheelchair')) return 'available'
-    if (['restroom', 'parking', 'elevator', 'stroller', 'lactationroom'].some(has)) return 'partial'
-    return null
+    return classifyAccess(it) // { grade, tags, note } | null
   } catch { return null }
 }

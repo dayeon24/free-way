@@ -88,8 +88,8 @@ function slimForShare(course) {
     conditions: s.conditions, chips: s.chips, center: s.center,
     days: s.days.map(d => ({
       day: d.day,
-      items: d.items.map(({ kind, contentid, name, type, x, y, addr, time, durationMin, grade, leg, openTime, restDate, facilityKind, reason }) => ({
-        kind, contentid, name, type, x: Math.round(x * 1e5) / 1e5, y: Math.round(y * 1e5) / 1e5, addr, time, durationMin, grade,
+      items: d.items.map(({ kind, contentid, name, type, x, y, addr, time, durationMin, grade, accessTags, leg, openTime, restDate, facilityKind, reason }) => ({
+        kind, contentid, name, type, x: Math.round(x * 1e5) / 1e5, y: Math.round(y * 1e5) / 1e5, addr, time, durationMin, grade, accessTags,
         leg: leg ? { mode: leg.mode, minutes: leg.minutes, km: leg.km } : null, openTime, restDate, facilityKind, reason,
       })),
     })),

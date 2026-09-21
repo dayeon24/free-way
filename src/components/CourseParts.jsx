@@ -152,8 +152,11 @@ function SlotCard({ item, editing, dragHandle, onRemove, onPlaceClick, onAlterna
             {item.durationMin > 0 && <span style={{ fontSize: 10.5, color: C.inkSoft }}>🕐 약 {item.durationMin}분</span>}
             {isFacility
               ? (item.hours && <span style={{ fontSize: 10.5, color: C.inkSoft }}>· {item.hours}</span>)
-              : <GradeBadge grade={item.grade} />}
+              : item.grade !== 'unknown' && <GradeBadge grade={item.grade} />}
           </div>
+          {!isFacility && item.accessTags?.length > 0 && (
+            <p style={{ fontSize: 10.5, color: '#1B642B', marginTop: 5, lineHeight: 1.5 }}>✓ {item.accessTags.join(' · ')}</p>
+          )}
           {!isFacility && <div style={{ marginTop: 5 }}><OpenBadge item={item} /></div>}
           {!isFacility && item.reason && <p style={{ fontSize: 10.5, color: C.inkSoft, marginTop: 5 }}>💡 {item.reason}</p>}
         </div>

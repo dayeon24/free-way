@@ -93,10 +93,10 @@ export default function AiCoursePage() {
       }
       for (const it of needAccess) {
         if (cancelled) return
-        const grade = await fetchAccessGrade(it.contentid)
+        const acc = await fetchAccessGrade(it.contentid)
         if (!cancelled) setCourse(c => c && patchItem(c, it.contentid, {
           accessChecked: true,
-          ...(grade ? { grade, warning: grade === 'available' ? null : '휠체어 출입 정보가 확인되지 않았어요' } : {}),
+          ...(acc ? { grade: acc.grade, warning: acc.grade === 'available' ? null : acc.note, accessTags: acc.tags } : {}),
         }))
       }
     })()

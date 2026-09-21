@@ -59,8 +59,8 @@ export const GRADE_LABEL = { available: '적합', partial: '일부 가능', unkn
 // 등급별 경고 문구 (접근성이 중요한 여행자에게만)
 export function warningFor(grade, sensitive = true) {
   if (!sensitive) return null
-  if (grade === 'partial') return '휠체어 출입 정보가 확인되지 않았어요'
-  if (grade === 'unknown') return '등록된 접근성 정보가 없어요'
+  if (grade === 'partial') return '출입구 접근 정보가 등록되지 않았어요. 방문 전 확인하세요'
+  if (grade === 'unknown') return '관광공사에 등록된 접근성 정보가 없어요. 방문 전 전화로 확인하세요'
   return null
 }
 

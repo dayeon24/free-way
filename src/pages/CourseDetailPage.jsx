@@ -52,8 +52,8 @@ export default function CourseDetailPage() {
     ;(async () => {
       for (const it of targets) {
         if (cancelled) return
-        const grade = await fetchAccessGrade(it.contentid)
-        if (grade && !cancelled) setAccess(prev => ({ ...prev, [it.contentid]: grade }))
+        const acc = await fetchAccessGrade(it.contentid)
+        if (acc && !cancelled) setAccess(prev => ({ ...prev, [it.contentid]: acc }))
       }
     })()
     return () => { cancelled = true }
@@ -67,9 +67,9 @@ export default function CourseDetailPage() {
       days: base.days.map(d => ({
         ...d,
         items: d.items.map(it => {
-          const grade = access[it.contentid]
-          if (!grade) return it
-          return { ...it, grade, warning: grade === 'available' ? null : '휠체어 출입 정보가 확인되지 않았어요' }
+          const acc = access[it.contentid]
+          if (!acc) return it
+          return { ...it, grade: acc.grade, warning: acc.grade === 'available' ? null : acc.note, accessTags: acc.tags }
         }),
       })),
     }
