@@ -50,7 +50,7 @@ function CourseCard({ course, likeCount, onOpen, onPlaceClick }) {
 }
 
 export default function CoursePageFront({
-  courses, loading, loadError, likes, weatherBanner, sheetOpen, myTravelType, conditions, generating, genError, canGenerate, toast,
+  courses, loading, loadError, likes, weatherBanner, sheetOpen, myConditions, conditions, generating, genError, canGenerate, toast,
   onOpenSheet, onCloseSheet, onSelectCondition, onGenerate, onOpenCourse, onPlaceClick, onWeatherClick, onRetry,
 }) {
   return (
@@ -119,7 +119,7 @@ export default function CoursePageFront({
 
       {sheetOpen && (
         <AiCourseSheet
-          conditions={conditions} myTravelType={myTravelType} generating={generating} error={genError} canGenerate={canGenerate}
+          conditions={conditions} myConditions={myConditions} generating={generating} error={genError} canGenerate={canGenerate}
           onSelect={onSelectCondition} onClose={onCloseSheet} onGenerate={onGenerate}
         />
       )}

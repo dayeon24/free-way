@@ -1,25 +1,46 @@
 import { useState } from 'react'
 import { useAccessibilityContext } from '../hooks/useAccessibility'
 import { Toast } from './CourseParts'
+import { TRAVELER_TYPES, TRANSPORTS, STAMINAS, DURATIONS } from '../utils/courseGen'
 
 /**
  * MyPage (FRONT) - 외견/UI 담당 (인라인 CSS)
  *
  * back에서 받는 데이터: user, userDoc, isLoading, loading, error, savedCourses, savedCoursesLoading, toast
  * back에서 받는 함수: onSignInWithGoogle, onLogout, onUpdateUserDoc, onUpdateProfile, onOpenSavedCourse
+ *
+ * 여행 조건 4종(여행자유형/이동수단/체력수준/여행일수)은 AI 코스 만들기(courseGen.js)와
+ * 같은 목록을 그대로 재사용함 — 따로 베껴 적으면 키 값이 어긋나서 "내 정보 불러오기"가 깨짐.
  */
-
-const TRAVEL_TYPES = [
-  { key: 'wheelchair', icon: '♿', label: '휠체어' },
-  { key: 'stroller',   icon: '👶', label: '유모차' },
-  { key: 'elderly',    icon: '🧓', label: '고령자' },
-]
 
 const FONT_SIZE_OPTIONS = [
   { value: 'small',  label: '소' },
   { value: 'medium', label: '중' },
   { value: 'large',  label: '대' },
 ]
+
+// 여행 조건 한 줄짜리 드롭다운 (전체 화면을 차지하지 않도록)
+function ProfileDropdown({ label, options, value, onChange }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <span style={{ fontSize: 13 }}>{label}</span>
+      <select
+        value={value || ''}
+        onChange={e => onChange(e.target.value)}
+        style={{
+          fontSize: 13, fontWeight: 600, color: 'var(--gray-800)', background: 'var(--gray-50)',
+          border: '1px solid var(--gray-200)', borderRadius: 8, padding: '8px 10px',
+          cursor: 'pointer', fontFamily: 'inherit', maxWidth: 160,
+        }}
+      >
+        <option value="" disabled>선택 안 함</option>
+        {options.map(o => (
+          <option key={o.key} value={o.key}>{o.icon ? `${o.icon} ` : ''}{o.label}</option>
+        ))}
+      </select>
+    </div>
+  )
+}
 
 // 프로필 수정 모달 (닉네임 / 프로필 사진 URL / 소개)
 function EditProfileModal({ initialName, initialPhoto, initialBio, onClose, onSave }) {
@@ -211,56 +232,49 @@ export default function MyPageFront({
           </div>
           <p style={{ fontSize: 12, color: 'var(--gray-600)', marginBottom: bio ? 4 : 10 }}>{user.email}</p>
           {bio && <p style={{ fontSize: 12, color: 'var(--gray-700)', lineHeight: 1.5, marginBottom: 10 }}>{bio}</p>}
-
-          {/* 저장한 코스 — 가로 스크롤 스크랩 목록 (이름만, 탭하면 해당 화면으로 이동) */}
-          {savedCoursesLoading ? (
-            <p style={{ fontSize: 11, color: 'var(--gray-400)' }}>저장한 코스 불러오는 중...</p>
-          ) : savedCourses.length === 0 ? (
-            <p style={{ fontSize: 11, color: 'var(--gray-400)' }}>아직 저장한 코스가 없어요.</p>
-          ) : (
-            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2 }}>
-              {savedCourses.map(saved => (
-                <button
-                  key={saved.id}
-                  onClick={() => onOpenSavedCourse(saved)}
-                  style={{
-                    flexShrink: 0, maxWidth: 160, padding: '7px 12px', borderRadius: 20,
-                    border: '1px solid var(--gray-200)', background: 'var(--gray-50)', cursor: 'pointer', fontFamily: 'inherit',
-                    fontSize: 12, fontWeight: 600, color: 'var(--gray-800)',
-                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                  }}
-                >
-                  {saved.name}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
       </div>
 
       <div className="section">
-        <p className="section-title">내 여행 유형</p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {TRAVEL_TYPES.map(type => {
-            const active = userDoc?.travelType === type.key
-            return (
-              <div
-                key={type.key}
-                onClick={() => onUpdateUserDoc({ travelType: type.key })}
+        <p className="section-title">저장한 코스</p>
+        {savedCoursesLoading ? (
+          <p style={{ fontSize: 12, color: 'var(--gray-500)' }}>불러오는 중...</p>
+        ) : savedCourses.length === 0 ? (
+          <p style={{ fontSize: 12, color: 'var(--gray-500)' }}>아직 저장한 코스가 없어요.</p>
+        ) : (
+          <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4 }}>
+            {savedCourses.map(saved => (
+              <button
+                key={saved.id}
+                onClick={() => onOpenSavedCourse(saved)}
                 className="card"
-                style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', border: active ? '1.5px solid var(--green-500)' : undefined }}
+                style={{
+                  flex: '0 0 calc(50% - 5px)', display: 'flex', alignItems: 'center', gap: 10,
+                  textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit', minWidth: 150,
+                }}
               >
-                <span style={{ fontSize: 20 }}>{type.icon}</span>
-                <span style={{ fontSize: 14, fontWeight: active ? 600 : 400 }}>{type.label}</span>
-                {active && <span className="badge badge-green" style={{ marginLeft: 'auto' }}>선택됨</span>}
-              </div>
-            )
-          })}
+                <span style={{ fontSize: 22, flexShrink: 0 }}>📍</span>
+                <span style={{ fontSize: 14, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.3 }}>
+                  {saved.name}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="section">
+        <p className="section-title">여행 조건</p>
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <ProfileDropdown label="여행자 유형" options={TRAVELER_TYPES} value={userDoc?.travelType} onChange={v => onUpdateUserDoc({ travelType: v })} />
+          <ProfileDropdown label="이동 수단" options={TRANSPORTS} value={userDoc?.transport} onChange={v => onUpdateUserDoc({ transport: v })} />
+          <ProfileDropdown label="체력 수준" options={STAMINAS} value={userDoc?.stamina} onChange={v => onUpdateUserDoc({ stamina: v })} />
+          <ProfileDropdown label="여행 일수" options={DURATIONS} value={userDoc?.duration} onChange={v => onUpdateUserDoc({ duration: v })} />
         </div>
       </div>
 
       <div className="section">
-        <p className="section-title">접근성 설정</p>
+        <p className="section-title">설정</p>
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
           {/* 글자 크기 */}

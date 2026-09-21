@@ -31,11 +31,10 @@ function postTimeAgo(ts) {
 /**
  * HomePage (FRONT) - 외견/UI 담당 (인라인 CSS)
  *
- * back에서 받는 데이터: weather, stampTour, courses, coursesLoading, coursesError, categories
+ * back에서 받는 데이터: weather, courses, coursesLoading, coursesError, categories
  */
 export default function HomePageFront({
   weather,
-  stampTour,
   courses,
   coursesLoading,
   coursesError,
@@ -89,73 +88,6 @@ export default function HomePageFront({
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '8px 0' }}>
             <span style={{ fontSize: 13, color: 'var(--gray-400)' }}>날씨 정보를 불러올 수 없어요 —</span>
           </div>
-        )}
-      </div>
-
-      {/* 스탬프 투어 */}
-      <div className="section">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <p className="section-title" style={{ marginBottom: 0 }}>🏅 스탬프 투어</p>
-          <Link to="/stamp" style={{ fontSize: 12, color: 'var(--gray-600)', textDecoration: 'none' }}>
-            전체보기 &gt;
-          </Link>
-        </div>
-        {stampTour.earned === 0 && (
-          <Link to="/stamp" className="card" style={{ textDecoration: 'none', color: 'inherit', display: 'block', textAlign: 'center' }}>
-            <p style={{ fontSize: 13, color: 'var(--gray-600)', marginBottom: 10 }}>
-              아직 시작한 투어가 없어요
-            </p>
-            <span className="btn btn-primary" style={{ display: 'inline-flex' }}>
-              첫 투어를 시작해보세요!
-            </span>
-          </Link>
-        )}
-
-        {stampTour.earned > 0 && stampTour.earned < stampTour.total && (
-          <Link to="/stamp" className="card" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{
-              width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-              border: '2px solid var(--green-500)', display: 'flex',
-              alignItems: 'center', justifyContent: 'center',
-            }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green-500)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <div style={{ flex: 1 }}>
-              <p style={{ fontSize: 14, fontWeight: 600, marginBottom: 6 }}>{stampTour.name}</p>
-              <p style={{ fontSize: 12, color: 'var(--gray-600)', marginBottom: 8 }}>
-                {stampTour.earned}/{stampTour.total} 완료
-              </p>
-              <div style={{ height: 6, background: 'var(--gray-100)', borderRadius: 4, overflow: 'hidden' }}>
-                <div style={{
-                  height: '100%',
-                  width: `${(stampTour.earned / stampTour.total) * 100}%`,
-                  background: 'var(--green-500)', borderRadius: 4,
-                }} />
-              </div>
-            </div>
-          </Link>
-        )}
-
-        {stampTour.earned > 0 && stampTour.earned === stampTour.total && (
-          <Link to="/stamp" className="card" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{
-              width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-              border: '2px solid var(--green-500)', background: 'var(--green-500)', display: 'flex',
-              alignItems: 'center', justifyContent: 'center',
-            }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <div style={{ flex: 1 }}>
-              <p style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>{stampTour.name}</p>
-              <p style={{ fontSize: 12, color: 'var(--green-500)', fontWeight: 600 }}>
-                🎉 모든 스탬프를 모았어요!
-              </p>
-            </div>
-          </Link>
         )}
       </div>
 

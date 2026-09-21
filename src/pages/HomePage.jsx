@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { collection, getDocs, orderBy, limit, query } from 'firebase/firestore'
 import { db } from '../firebase'
-import { STAMPS } from './StampPage'
 import { getBarrierFreeList } from '../utils/tourApi'
 import { CATEGORIES, DEFAULT_CENTER } from '../utils/constants'
 import { fetchWeather } from '../utils/weather'
@@ -10,8 +9,8 @@ import HomePageFront from '../components/HomePage_front'
 /**
  * HomePage (BACK) - 기능/로직 담당
  *
- * 보유: 날씨(기상청 단기예보 API), 스탬프 진행 요약, AI 추천 코스(TourAPI fallback)
- * front에 넘기는 데이터: weather, stampTour, courses, coursesLoading, coursesError, categories
+ * 보유: 날씨(기상청 단기예보 API), AI 추천 코스(TourAPI fallback)
+ * front에 넘기는 데이터: weather, courses, coursesLoading, coursesError, categories
  */
 
 // 날씨 조건별 아이콘/무장애 맥락 메시지 (기획서 HOME-02 "날씨 아이콘 8종" + "메시지 변형 5종")
@@ -26,8 +25,6 @@ const WEATHER_CONDITIONS = {
   heatwave:     { icon: '🥵', message: '더운 날씨예요. 그늘진 코스를 추천해요.' },
 }
 
-
-const STAMP_TOUR_NAME = '광주 무장애 시티 투어'
 
 export default function HomePage() {
   const [weatherData, setWeatherData] = useState(null)
@@ -77,14 +74,12 @@ export default function HomePage() {
       .finally(() => setPostsLoading(false))
   }, [])
 
-  const earned = STAMPS.filter(s => s.earned).length
   const cond = weatherData ? (WEATHER_CONDITIONS[weatherData.condition] || WEATHER_CONDITIONS.sunny) : null
   const weather = weatherData ? { ...weatherData, icon: cond.icon, message: cond.message } : null
 
   return (
     <HomePageFront
       weather={weather}
-      stampTour={{ name: STAMP_TOUR_NAME, earned, total: STAMPS.length }}
       courses={courses}
       coursesLoading={coursesLoading}
       coursesError={coursesError}

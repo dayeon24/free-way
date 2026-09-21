@@ -27,7 +27,15 @@ function Option({ selected, onClick, children, style }) {
 
 const Label = ({ children }) => <p style={{ fontSize: 12, fontWeight: 700, color: C.inkSoft, margin: '16px 0 8px' }}>{children}</p>
 
-export default function AiCourseSheet({ conditions, myTravelType, generating, error, canGenerate, onSelect, onClose, onGenerate }) {
+export default function AiCourseSheet({ conditions, myConditions, generating, error, canGenerate, onSelect, onClose, onGenerate }) {
+  // 내 정보(마이페이지 "여행 조건")에 저장된 값 중 하나라도 있고, 지금 선택과 다른 게 있으면 "불러오기" 노출
+  const hasProfileToLoad = myConditions && Object.entries(myConditions).some(
+    ([key, value]) => value && conditions[key] !== value
+  )
+  function loadFromProfile() {
+    Object.entries(myConditions).forEach(([key, value]) => { if (value) onSelect(key, value) })
+  }
+
   return (
     <Sheet title="AI 코스 만들기" subtitle="조건을 선택하면 맞춤 코스를 생성해드려요" onClose={generating ? undefined : onClose}>
       {generating ? (
@@ -38,17 +46,20 @@ export default function AiCourseSheet({ conditions, myTravelType, generating, er
         </div>
       ) : (
         <>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 }}>
-            <Label>여행자 유형</Label>
-            {myTravelType && conditions.travelerType !== myTravelType && (
-              <button
-                type="button" onClick={() => onSelect('travelerType', myTravelType)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11.5, fontWeight: 700, color: TEAL[700], padding: 0 }}
-              >
-                내 정보 불러오기
-              </button>
-            )}
-          </div>
+          {hasProfileToLoad && (
+            <button
+              type="button" onClick={loadFromProfile}
+              style={{
+                display: 'block', width: '100%', marginTop: 14, padding: '10px 12px', borderRadius: 10,
+                background: TEAL[50], border: `1px solid ${TEAL[500]}`, cursor: 'pointer',
+                fontSize: 12.5, fontWeight: 700, color: TEAL[800], fontFamily: 'inherit', textAlign: 'center',
+              }}
+            >
+              내 정보(마이페이지 여행 조건) 불러오기
+            </button>
+          )}
+
+          <Label>여행자 유형</Label>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             {TRAVELER_TYPES.map(t => (
               <Option key={t.key} selected={conditions.travelerType === t.key} onClick={() => onSelect('travelerType', t.key)} style={{ padding: '14px 8px', textAlign: 'center' }}>

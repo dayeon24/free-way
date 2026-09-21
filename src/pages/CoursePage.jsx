@@ -121,7 +121,7 @@ export default function CoursePage() {
       likes={likes}
       weatherBanner={weatherBanner}
       sheetOpen={sheetOpen}
-      myTravelType={userDoc?.travelType}
+      myConditions={{ travelerType: userDoc?.travelType, transport: userDoc?.transport, stamina: userDoc?.stamina, duration: userDoc?.duration }}
       conditions={conditions}
       generating={generating}
       genError={genError}
