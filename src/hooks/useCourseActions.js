@@ -42,7 +42,7 @@ export function useCourseActions(getCourse) {
         setSavedId(result)
         setShareInfo(null)
         setSaveOpen(false)
-        setToast('코스를 저장했어요. 이제 URL로 공유할 수 있어요.')
+        setToast('코스를 저장했어요. 내 정보 탭에서 확인하세요. URL로도 공유할 수 있어요.')
       }
     } catch (e) {
       console.error(e)

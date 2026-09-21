@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { useAccessibilityContext } from '../hooks/useAccessibility'
+import { Toast } from './CourseParts'
 
 /**
  * MyPage (FRONT) - 외견/UI 담당 (인라인 CSS)
  *
- * back에서 받는 데이터: user, userDoc, isLoading, loading, error
- * back에서 받는 함수: onSignInWithGoogle, onLogout, onUpdateUserDoc, onUpdateProfile
+ * back에서 받는 데이터: user, userDoc, isLoading, loading, error, savedCourses, savedCoursesLoading, toast
+ * back에서 받는 함수: onSignInWithGoogle, onLogout, onUpdateUserDoc, onUpdateProfile, onOpenSavedCourse
  */
 
 const TRAVEL_TYPES = [
@@ -121,10 +122,14 @@ export default function MyPageFront({
   isLoading,
   loading,
   error,
+  savedCourses,
+  savedCoursesLoading,
+  toast,
   onSignInWithGoogle,
   onLogout,
   onUpdateUserDoc,
   onUpdateProfile,
+  onOpenSavedCourse,
 }) {
   const [showEditProfile, setShowEditProfile] = useState(false)
   const { settings: a11y, update: updateA11y } = useAccessibilityContext()
@@ -206,14 +211,30 @@ export default function MyPageFront({
           </div>
           <p style={{ fontSize: 12, color: 'var(--gray-600)', marginBottom: bio ? 4 : 10 }}>{user.email}</p>
           {bio && <p style={{ fontSize: 12, color: 'var(--gray-700)', lineHeight: 1.5, marginBottom: 10 }}>{bio}</p>}
-          <div style={{ display: 'flex', gap: 16 }}>
-            {[['0', '스탬프'], ['0', '완료 코스'], ['0', '방문지']].map(([n, label]) => (
-              <div key={label} style={{ textAlign: 'center' }}>
-                <p style={{ fontSize: 18, fontWeight: 700, color: 'var(--green-500)' }}>{n}</p>
-                <p style={{ fontSize: 10, color: 'var(--gray-600)' }}>{label}</p>
-              </div>
-            ))}
-          </div>
+
+          {/* 저장한 코스 — 가로 스크롤 스크랩 목록 (이름만, 탭하면 해당 화면으로 이동) */}
+          {savedCoursesLoading ? (
+            <p style={{ fontSize: 11, color: 'var(--gray-400)' }}>저장한 코스 불러오는 중...</p>
+          ) : savedCourses.length === 0 ? (
+            <p style={{ fontSize: 11, color: 'var(--gray-400)' }}>아직 저장한 코스가 없어요.</p>
+          ) : (
+            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2 }}>
+              {savedCourses.map(saved => (
+                <button
+                  key={saved.id}
+                  onClick={() => onOpenSavedCourse(saved)}
+                  style={{
+                    flexShrink: 0, maxWidth: 160, padding: '7px 12px', borderRadius: 20,
+                    border: '1px solid var(--gray-200)', background: 'var(--gray-50)', cursor: 'pointer', fontFamily: 'inherit',
+                    fontSize: 12, fontWeight: 600, color: 'var(--gray-800)',
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                  }}
+                >
+                  {saved.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -241,17 +262,6 @@ export default function MyPageFront({
       <div className="section">
         <p className="section-title">접근성 설정</p>
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-
-          {/* TTS */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 13 }}>음성 안내 (TTS)</span>
-            <div
-              onClick={() => updateA11y({ tts: !a11y.tts })}
-              style={{ width: 40, height: 22, borderRadius: 11, background: a11y.tts ? 'var(--green-500)' : 'var(--gray-200)', position: 'relative', cursor: 'pointer', transition: 'background 0.2s' }}
-            >
-              <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'white', position: 'absolute', top: 2, left: a11y.tts ? 20 : 2, transition: 'left 0.2s' }} />
-            </div>
-          </div>
 
           {/* 글자 크기 */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -285,17 +295,6 @@ export default function MyPageFront({
             </div>
           </div>
 
-          {/* 스탬프 알림 (Firestore 연동 유지) */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 13 }}>스탬프 알림</span>
-            <div
-              onClick={() => onUpdateUserDoc({ settings: { ...userDoc?.settings, stampAlert: !(userDoc?.settings?.stampAlert ?? false) } })}
-              style={{ width: 40, height: 22, borderRadius: 11, background: (userDoc?.settings?.stampAlert ?? false) ? 'var(--green-500)' : 'var(--gray-200)', position: 'relative', cursor: 'pointer', transition: 'background 0.2s' }}
-            >
-              <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'white', position: 'absolute', top: 2, left: (userDoc?.settings?.stampAlert ?? false) ? 20 : 2, transition: 'left 0.2s' }} />
-            </div>
-          </div>
-
         </div>
       </div>
 
@@ -317,6 +316,7 @@ export default function MyPageFront({
           onSave={onUpdateProfile}
         />
       )}
+      <Toast message={toast} />
     </div>
   )
 }

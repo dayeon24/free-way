@@ -6,7 +6,7 @@
 // ※ 위 컬렉션들은 Firestore 보안 규칙에 별도로 허용해야 동작함 (백엔드 담당 확인 필요).
 //   규칙이 없으면 저장은 실패 토스트, 공유는 "URL에 코스를 담는 방식"으로 대체된다.
 import {
-  collection, addDoc, doc, getDoc, getDocs, setDoc, query, where, serverTimestamp,
+  collection, addDoc, doc, getDoc, getDocs, setDoc, updateDoc, query, where, serverTimestamp,
   arrayUnion, arrayRemove,
 } from 'firebase/firestore'
 import { db } from '../firebase'
@@ -49,6 +49,28 @@ export async function saveCourse(user, course, { name, memo }) {
     createdAt: serverTimestamp(),
   })
   return ref.id
+}
+
+// 마이페이지 "저장한 코스" 목록 — 제목/썸네일 없이 이름만 보여주는 북마크 형태라 필요한 필드만
+export async function loadSavedCourses(uid) {
+  const snap = await getDocs(query(collection(db, 'savedCourses'), where('uid', '==', uid)))
+  const list = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+  list.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0))
+  return list
+}
+
+// 저장한 코스 클릭 시 이동할 공유 URL. 한 번 만들면 savedCourses 문서에 shareId를 캐싱해서
+// 다시 누를 때마다 sharedCourses에 중복 스냅샷이 쌓이지 않게 함
+export async function getSavedCourseShareUrl(savedDoc) {
+  const origin = window.location.origin
+  if (savedDoc.shareId) return `${origin}/course/share/${savedDoc.shareId}`
+
+  const info = await shareCourse(JSON.parse(savedDoc.courseJson))
+  if (info.kind === 'short') {
+    const shareId = info.url.split('/').pop()
+    await updateDoc(doc(db, 'savedCourses', savedDoc.id), { shareId }).catch(() => {}) // 캐싱 실패해도 이번 이동엔 지장 없음
+  }
+  return info.url
 }
 
 /* ───────── URL 공유 ───────── */

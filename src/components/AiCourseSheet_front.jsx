@@ -27,7 +27,7 @@ function Option({ selected, onClick, children, style }) {
 
 const Label = ({ children }) => <p style={{ fontSize: 12, fontWeight: 700, color: C.inkSoft, margin: '16px 0 8px' }}>{children}</p>
 
-export default function AiCourseSheet({ conditions, generating, error, canGenerate, onSelect, onClose, onGenerate }) {
+export default function AiCourseSheet({ conditions, myTravelType, generating, error, canGenerate, onSelect, onClose, onGenerate }) {
   return (
     <Sheet title="AI 코스 만들기" subtitle="조건을 선택하면 맞춤 코스를 생성해드려요" onClose={generating ? undefined : onClose}>
       {generating ? (
@@ -38,7 +38,17 @@ export default function AiCourseSheet({ conditions, generating, error, canGenera
         </div>
       ) : (
         <>
-          <Label>여행자 유형</Label>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 }}>
+            <Label>여행자 유형</Label>
+            {myTravelType && conditions.travelerType !== myTravelType && (
+              <button
+                type="button" onClick={() => onSelect('travelerType', myTravelType)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11.5, fontWeight: 700, color: TEAL[700], padding: 0 }}
+              >
+                내 정보 불러오기
+              </button>
+            )}
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             {TRAVELER_TYPES.map(t => (
               <Option key={t.key} selected={conditions.travelerType === t.key} onClick={() => onSelect('travelerType', t.key)} style={{ padding: '14px 8px', textAlign: 'center' }}>

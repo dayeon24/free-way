@@ -1,7 +1,7 @@
 import { useState, useEffect, createContext, useContext } from 'react'
 
 const STORAGE_KEY = 'freeway_accessibility'
-const DEFAULTS = { tts: false, fontSize: 'medium', highContrast: false }
+const DEFAULTS = { fontSize: 'medium', highContrast: false }
 
 export const AccessibilityContext = createContext(null)
 
@@ -18,10 +18,6 @@ export function useAccessibility() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
     document.documentElement.dataset.fontSize = settings.fontSize
     document.documentElement.dataset.highContrast = settings.highContrast ? 'true' : 'false'
-
-    if (!settings.tts) {
-      window.speechSynthesis?.cancel()
-    }
   }, [settings])
 
   function update(patch) {

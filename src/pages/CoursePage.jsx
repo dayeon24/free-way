@@ -5,6 +5,7 @@ import { loadTourCourses } from '../utils/courseApi'
 import { generateCourse } from '../utils/courseGen'
 import { loadAllLikes, AI_COURSE_KEY } from '../utils/courseStore'
 import { fetchWeather } from '../utils/weather'
+import { useAuth } from '../hooks/useAuth'
 import CoursePageFront from '../components/CoursePage_front'
 
 const EMPTY_CONDITIONS = { travelerType: null, transport: null, stamina: null, duration: null }
@@ -20,6 +21,7 @@ const EMPTY_CONDITIONS = { travelerType: null, transport: null, stamina: null, d
  */
 export default function CoursePage() {
   const navigate = useNavigate()
+  const { userDoc } = useAuth()
 
   const [courses, setCourses] = useState([])
   const [loading, setLoading] = useState(true)
@@ -119,6 +121,7 @@ export default function CoursePage() {
       likes={likes}
       weatherBanner={weatherBanner}
       sheetOpen={sheetOpen}
+      myTravelType={userDoc?.travelType}
       conditions={conditions}
       generating={generating}
       genError={genError}
